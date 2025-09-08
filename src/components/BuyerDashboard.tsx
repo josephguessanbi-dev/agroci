@@ -9,6 +9,13 @@ export const BuyerDashboard = () => {
   const [activeTab, setActiveTab] = useState("search");
   const [searchQuery, setSearchQuery] = useState("");
 
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      console.log('Recherche:', searchQuery.trim());
+      // TODO: Implémenter la recherche réelle
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Quick Stats */}
@@ -89,11 +96,12 @@ export const BuyerDashboard = () => {
                   <Input 
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                     placeholder="Rechercher un produit (maïs, riz, manioc...)" 
                     className="w-full"
                   />
                 </div>
-                <Button onClick={() => console.log('Recherche:', searchQuery)}>
+                <Button onClick={handleSearch}>
                   <Search className="mr-2 h-4 w-4" />
                   Rechercher
                 </Button>

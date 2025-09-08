@@ -117,10 +117,14 @@ export const AddProductForm = ({ onProductAdded }: AddProductFormProps) => {
         .from('profiles')
         .select('id')
         .eq('user_id', user!.id)
-        .single();
+        .maybeSingle();
 
-      if (profileError || !profile) {
-        throw new Error("Profile non trouvé");
+      if (profileError) {
+        throw new Error(`Erreur de profil: ${profileError.message}`);
+      }
+      
+      if (!profile) {
+        throw new Error("Profil non trouvé. Veuillez vous reconnecter.");
       }
 
       // Upload images first

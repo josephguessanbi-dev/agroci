@@ -1,18 +1,65 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Search, Heart, History, Filter, ShoppingCart } from "lucide-react";
+import { Search, Heart, History, Filter, ShoppingCart, MapPin, Phone } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+interface Product {
+  id: string;
+  nom: string;
+  description: string;
+  prix: number;
+  quantite: string;
+  localisation: string;
+  image_url?: string;
+  producteur_id: string;
+  profiles?: {
+    nom: string;
+    prenom: string;
+    whatsapp: string;
+  };
+}
 
 export const BuyerDashboard = () => {
   const [activeTab, setActiveTab] = useState("search");
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Product[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
-  const handleSearch = () => {
-    if (searchQuery.trim()) {
-      console.log('Recherche:', searchQuery.trim());
-      // TODO: Implémenter la recherche réelle
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+    
+    setIsSearching(true);
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          profiles:producteur_id (
+            nom,
+            prenom,
+            whatsapp
+          )
+        `)
+        .eq('status', 'approuve')
+        .ilike('nom', `%${searchQuery.trim()}%`);
+
+      if (error) {
+        toast.error("Erreur lors de la recherche");
+        console.error('Erreur recherche:', error);
+        return;
+      }
+
+      setSearchResults(data || []);
+      toast.success(`${data?.length || 0} produit(s) trouvé(s)`);
+    } catch (error) {
+      toast.error("Erreur lors de la recherche");
+      console.error('Erreur recherche:', error);
+    } finally {
+      setIsSearching(false);
     }
   };
 
@@ -106,9 +153,9 @@ export const BuyerDashboard = () => {
                     className="w-full"
                   />
                 </div>
-                <Button onClick={handleSearch}>
+                <Button onClick={handleSearch} disabled={isSearching}>
                   <Search className="mr-2 h-4 w-4" />
-                  Rechercher
+                  {isSearching ? "Recherche..." : "Rechercher"}
                 </Button>
               </div>
               
@@ -147,13 +194,82 @@ export const BuyerDashboard = () => {
                 </Button>
               </div>
 
-              <div className="text-center py-8 border rounded-lg bg-muted/20">
-                <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Commencez votre recherche</h3>
-                <p className="text-muted-foreground">
-                  Utilisez les filtres ci-dessus pour trouver les produits qui vous intéressent
-                </p>
-              </div>
+              {/* Résultats de recherche */}
+              {searchResults.length > 0 ? (
+                <div className="grid gap-4">
+                  <h3 className="text-lg font-semibold">Résultats de recherche ({searchResults.length})</h3>
+                  {searchResults.map((product) => (
+                    <Card key={product.id} className="p-4">
+                      <div className="flex gap-4">
+                        {product.image_url && (
+                          <img 
+                            src={product.image_url} 
+                            alt={product.nom}
+                            className="w-20 h-20 object-cover rounded-md"
+                          />
+                        )}
+                        <div className="flex-1">
+                          <div className="flex justify-between items-start mb-2">
+                            <h4 className="font-semibold text-lg">{product.nom}</h4>
+                            <div className="text-right">
+                              <div className="text-lg font-bold text-primary">{product.prix} FCFA</div>
+                              <div className="text-sm text-muted-foreground">{product.quantite}</div>
+                            </div>
+                          </div>
+                          
+                          {product.description && (
+                            <p className="text-muted-foreground mb-3">{product.description}</p>
+                          )}
+                          
+                          <div className="flex items-center gap-4 mb-3">
+                            {product.localisation && (
+                              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                <MapPin className="h-4 w-4" />
+                                {product.localisation}
+                              </div>
+                            )}
+                            
+                            {product.profiles && (
+                              <div className="text-sm text-muted-foreground">
+                                Par {product.profiles.prenom} {product.profiles.nom}
+                              </div>
+                            )}
+                          </div>
+                          
+                          {product.profiles?.whatsapp && (
+                            <Button 
+                              size="sm" 
+                              className="bg-green-600 hover:bg-green-700"
+                              onClick={() => {
+                                window.open(`https://wa.me/${product.profiles?.whatsapp.replace(/\s+/g, '')}?text=Bonjour, je suis intéressé(e) par votre produit: ${product.nom}`, '_blank');
+                              }}
+                            >
+                              <Phone className="mr-2 h-4 w-4" />
+                              Contacter sur WhatsApp
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              ) : searchQuery && !isSearching ? (
+                <div className="text-center py-8 border rounded-lg bg-muted/20">
+                  <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Aucun résultat trouvé</h3>
+                  <p className="text-muted-foreground">
+                    Essayez avec d'autres mots-clés
+                  </p>
+                </div>
+              ) : (
+                <div className="text-center py-8 border rounded-lg bg-muted/20">
+                  <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Commencez votre recherche</h3>
+                  <p className="text-muted-foreground">
+                    Utilisez les filtres ci-dessus pour trouver les produits qui vous intéressent
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

@@ -16,6 +16,11 @@ export const BuyerDashboard = () => {
     }
   };
 
+  const handleProductClick = (productName: string) => {
+    setSearchQuery(productName);
+    handleSearch();
+  };
+
   return (
     <div className="space-y-6">
       {/* Quick Stats */}
@@ -108,19 +113,35 @@ export const BuyerDashboard = () => {
               </div>
               
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Button variant="outline" className="h-auto p-4 flex flex-col">
+                <Button 
+                  variant="outline" 
+                  className="h-auto p-4 flex flex-col"
+                  onClick={() => handleProductClick('Maïs')}
+                >
                   <div className="text-2xl mb-2">🌽</div>
                   <span>Maïs</span>
                 </Button>
-                <Button variant="outline" className="h-auto p-4 flex flex-col">
+                <Button 
+                  variant="outline" 
+                  className="h-auto p-4 flex flex-col"
+                  onClick={() => handleProductClick('Riz')}
+                >
                   <div className="text-2xl mb-2">🍚</div>
                   <span>Riz</span>
                 </Button>
-                <Button variant="outline" className="h-auto p-4 flex flex-col">
+                <Button 
+                  variant="outline" 
+                  className="h-auto p-4 flex flex-col"
+                  onClick={() => handleProductClick('Manioc')}
+                >
                   <div className="text-2xl mb-2">🍠</div>
                   <span>Manioc</span>
                 </Button>
-                <Button variant="outline" className="h-auto p-4 flex flex-col">
+                <Button 
+                  variant="outline" 
+                  className="h-auto p-4 flex flex-col"
+                  onClick={() => handleProductClick('Igname')}
+                >
                   <div className="text-2xl mb-2">🥔</div>
                   <span>Igname</span>
                 </Button>

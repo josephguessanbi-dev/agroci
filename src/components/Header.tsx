@@ -33,13 +33,13 @@ export const Header = () => {
             <button onClick={() => navigate('/')} className="text-foreground hover:text-primary transition-colors">
               Accueil
             </button>
-            <button onClick={() => navigate('/')} className="text-foreground hover:text-primary transition-colors">
+            <button onClick={() => navigate('/products')} className="text-foreground hover:text-primary transition-colors">
               Produits
             </button>
-            <button onClick={() => navigate('/')} className="text-foreground hover:text-primary transition-colors">
+            <button onClick={() => navigate('/producers')} className="text-foreground hover:text-primary transition-colors">
               Producteurs
             </button>
-            <button onClick={() => navigate('/')} className="text-foreground hover:text-primary transition-colors">
+            <button onClick={() => navigate('/buyers')} className="text-foreground hover:text-primary transition-colors">
               Acheteurs
             </button>
           </nav>

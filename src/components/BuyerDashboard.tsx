@@ -29,10 +29,12 @@ export const BuyerDashboard = () => {
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
+  const handleSearch = async (query?: string) => {
+    const searchTerm = query || searchQuery.trim();
+    if (!searchTerm) return;
     
     setIsSearching(true);
+    console.log('Recherche pour:', searchTerm);
     try {
       const { data, error } = await supabase
         .from('products')
@@ -45,7 +47,7 @@ export const BuyerDashboard = () => {
           )
         `)
         .eq('status', 'approuve')
-        .ilike('nom', `%${searchQuery.trim()}%`);
+        .ilike('nom', `%${searchTerm}%`);
 
       if (error) {
         toast.error("Erreur lors de la recherche");
@@ -53,6 +55,7 @@ export const BuyerDashboard = () => {
         return;
       }
 
+      console.log('Résultats trouvés:', data);
       setSearchResults(data || []);
       toast.success(`${data?.length || 0} produit(s) trouvé(s)`);
     } catch (error) {
@@ -65,7 +68,7 @@ export const BuyerDashboard = () => {
 
   const handleProductClick = (productName: string) => {
     setSearchQuery(productName);
-    handleSearch();
+    handleSearch(productName); // Passer directement le terme de recherche
   };
 
   return (
@@ -153,7 +156,7 @@ export const BuyerDashboard = () => {
                     className="w-full"
                   />
                 </div>
-                <Button onClick={handleSearch} disabled={isSearching}>
+                <Button onClick={() => handleSearch()} disabled={isSearching}>
                   <Search className="mr-2 h-4 w-4" />
                   {isSearching ? "Recherche..." : "Rechercher"}
                 </Button>

@@ -7,6 +7,7 @@ import { Search, Heart, History, Filter, ShoppingCart } from "lucide-react";
 
 export const BuyerDashboard = () => {
   const [activeTab, setActiveTab] = useState("search");
+  const [searchQuery, setSearchQuery] = useState("");
 
   return (
     <div className="space-y-6">
@@ -86,11 +87,13 @@ export const BuyerDashboard = () => {
               <div className="flex space-x-4">
                 <div className="flex-1">
                   <Input 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Rechercher un produit (maïs, riz, manioc...)" 
                     className="w-full"
                   />
                 </div>
-                <Button>
+                <Button onClick={() => console.log('Recherche:', searchQuery)}>
                   <Search className="mr-2 h-4 w-4" />
                   Rechercher
                 </Button>

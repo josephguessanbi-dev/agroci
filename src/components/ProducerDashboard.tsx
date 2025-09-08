@@ -36,17 +36,28 @@ export const ProducerDashboard = () => {
   const { toast } = useToast();
 
   const fetchProducts = async () => {
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     
     try {
+      setLoading(true);
+      
       // Get user profile first
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('id')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
       
-      if (!profile) return;
+      if (profileError) throw profileError;
+      if (!profile) {
+        console.warn('No profile found for user');
+        setProducts([]);
+        setStats({ totalProducts: 0, totalViews: 0, totalClicks: 0, conversionRate: 0 });
+        return;
+      }
       
       // Fetch products
       const { data: productsData, error } = await supabase
@@ -57,12 +68,13 @@ export const ProducerDashboard = () => {
       
       if (error) throw error;
       
-      setProducts(productsData || []);
+      const products = productsData || [];
+      setProducts(products);
       
       // Calculate stats
-      const totalProducts = productsData?.length || 0;
-      const totalViews = productsData?.reduce((sum, p) => sum + (p.views_count || 0), 0) || 0;
-      const totalClicks = productsData?.reduce((sum, p) => sum + (p.whatsapp_clicks || 0), 0) || 0;
+      const totalProducts = products.length;
+      const totalViews = products.reduce((sum, p) => sum + (p.views_count || 0), 0);
+      const totalClicks = products.reduce((sum, p) => sum + (p.whatsapp_clicks || 0), 0);
       const conversionRate = totalViews > 0 ? Math.round((totalClicks / totalViews) * 100) : 0;
       
       setStats({
@@ -73,11 +85,14 @@ export const ProducerDashboard = () => {
       });
       
     } catch (error: any) {
+      console.error('Error fetching products:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de charger vos produits",
+        description: error.message || "Impossible de charger vos produits",
         variant: "destructive"
       });
+      setProducts([]);
+      setStats({ totalProducts: 0, totalViews: 0, totalClicks: 0, conversionRate: 0 });
     } finally {
       setLoading(false);
     }
@@ -98,15 +113,17 @@ export const ProducerDashboard = () => {
       if (error) throw error;
       
       toast({
-        title: "Produit supprimé",
+        title: "Success",
         description: "Le produit a été supprimé avec succès"
       });
       
-      fetchProducts();
+      // Refresh the products list
+      await fetchProducts();
     } catch (error: any) {
+      console.error('Error deleting product:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de supprimer le produit",
+        description: error.message || "Impossible de supprimer le produit",
         variant: "destructive"
       });
     }

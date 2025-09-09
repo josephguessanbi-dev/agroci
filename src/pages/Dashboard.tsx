@@ -6,6 +6,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ProducerDashboard } from "@/components/ProducerDashboard";
 import { BuyerDashboard } from "@/components/BuyerDashboard";
+import { AdminDashboard } from "@/components/AdminDashboard";
 import { Loader2 } from "lucide-react";
 
 interface Profile {
@@ -90,6 +91,8 @@ const Dashboard = () => {
 
         {profile.user_type === 'producteur' ? (
           <ProducerDashboard />
+        ) : profile.user_type === 'admin' ? (
+          <AdminDashboard />
         ) : (
           <BuyerDashboard />
         )}

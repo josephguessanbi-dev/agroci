@@ -48,6 +48,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "favorites_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_producer_profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       product_views: {
@@ -82,6 +89,13 @@ export type Database = {
             columns: ["viewer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_views_viewer_id_fkey"
+            columns: ["viewer_id"]
+            isOneToOne: false
+            referencedRelation: "public_producer_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -138,6 +152,13 @@ export type Database = {
             columns: ["producteur_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_producteur_id_fkey"
+            columns: ["producteur_id"]
+            isOneToOne: false
+            referencedRelation: "public_producer_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -223,6 +244,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_producer_profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       whatsapp_clicks: {
@@ -253,6 +281,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "whatsapp_clicks_clicker_id_fkey"
+            columns: ["clicker_id"]
+            isOneToOne: false
+            referencedRelation: "public_producer_profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "whatsapp_clicks_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
@@ -263,7 +298,42 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_producer_profiles: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          nom: string | null
+          pays: string | null
+          prenom: string | null
+          region: string | null
+          type_activite: string | null
+          user_type: Database["public"]["Enums"]["user_type"] | null
+          verified: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          nom?: string | null
+          pays?: string | null
+          prenom?: string | null
+          region?: string | null
+          type_activite?: string | null
+          user_type?: Database["public"]["Enums"]["user_type"] | null
+          verified?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          nom?: string | null
+          pays?: string | null
+          prenom?: string | null
+          region?: string | null
+          type_activite?: string | null
+          user_type?: Database["public"]["Enums"]["user_type"] | null
+          verified?: boolean | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_interested_buyers: {
@@ -272,6 +342,14 @@ export type Database = {
           buyer_nom: string
           buyer_prenom: string
           interaction_date: string
+        }[]
+      }
+      get_producer_contact_info: {
+        Args: { producer_profile_id: string; product_id: string }
+        Returns: {
+          nom: string
+          prenom: string
+          whatsapp: string
         }[]
       }
       get_public_producer_info: {

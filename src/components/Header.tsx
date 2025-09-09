@@ -88,14 +88,23 @@ export const Header = () => {
                 <div className="w-20 h-8 bg-muted rounded animate-pulse" />
               </div>
             ) : user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="flex items-center space-x-2">
-                    <User className="h-4 w-4" />
-                    <span>Mon compte</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                 <DropdownMenuContent align="end" className="w-48">
+               <DropdownMenu>
+                 <DropdownMenuTrigger asChild>
+                   <Button 
+                     variant="outline" 
+                     size="sm" 
+                     className="flex items-center space-x-2"
+                     onClick={() => console.log('Menu dropdown clicked')}
+                   >
+                     <User className="h-4 w-4" />
+                     <span>Mon compte</span>
+                   </Button>
+                 </DropdownMenuTrigger>
+                 <DropdownMenuContent 
+                   align="end" 
+                   className="w-48 z-[100] bg-background border shadow-lg"
+                   sideOffset={5}
+                 >
                    <DropdownMenuItem onClick={() => navigate('/dashboard')}>
                      <User className="mr-2 h-4 w-4" />
                      <span>Tableau de bord</span>
@@ -106,13 +115,13 @@ export const Header = () => {
                        <span>Administration</span>
                      </DropdownMenuItem>
                    )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Déconnexion</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                   <DropdownMenuSeparator />
+                   <DropdownMenuItem onClick={handleSignOut}>
+                     <LogOut className="mr-2 h-4 w-4" />
+                     <span>Déconnexion</span>
+                   </DropdownMenuItem>
+                 </DropdownMenuContent>
+               </DropdownMenu>
             ) : (
               <>
                 <Button variant="outline" size="sm" onClick={() => navigate('/auth')}>

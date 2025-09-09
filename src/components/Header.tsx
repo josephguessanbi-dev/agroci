@@ -62,16 +62,40 @@ export const Header = () => {
           </div>
           
           <nav className="hidden md:flex items-center space-x-6">
-            <button onClick={handleHomeClick} className="text-foreground hover:text-primary transition-colors font-medium">
+            <button 
+              onClick={() => {
+                console.log('Clic sur le bouton d\'accueil dans nav');
+                navigate('/');
+              }} 
+              className="text-foreground hover:text-primary transition-colors font-medium"
+            >
               Accueil
             </button>
-            <button onClick={() => navigate('/products')} className="text-foreground hover:text-primary transition-colors">
+            <button 
+              onClick={() => {
+                console.log('Clic sur Produits');
+                navigate('/products');
+              }} 
+              className="text-foreground hover:text-primary transition-colors"
+            >
               Produits
             </button>
-            <button onClick={() => navigate('/producers')} className="text-foreground hover:text-primary transition-colors">
+            <button 
+              onClick={() => {
+                console.log('Clic sur Producteurs');
+                navigate('/producers');
+              }} 
+              className="text-foreground hover:text-primary transition-colors"
+            >
               Producteurs
             </button>
-            <button onClick={() => navigate('/buyers')} className="text-foreground hover:text-primary transition-colors">
+            <button 
+              onClick={() => {
+                console.log('Clic sur Acheteurs');
+                navigate('/buyers');
+              }} 
+              className="text-foreground hover:text-primary transition-colors"
+            >
               Acheteurs
             </button>
           </nav>
@@ -144,10 +168,24 @@ export const Header = () => {
               </DropdownMenu>
             ) : (
               <>
-                <Button variant="outline" size="sm" onClick={() => navigate('/auth')}>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => {
+                    console.log('Bouton Connexion cliqué');
+                    navigate('/auth');
+                  }}
+                >
                   Connexion
                 </Button>
-                <Button variant="accent" size="sm" onClick={() => navigate('/auth')}>
+                <Button 
+                  variant="accent" 
+                  size="sm" 
+                  onClick={() => {
+                    console.log('Bouton Inscription cliqué');
+                    navigate('/auth');
+                  }}
+                >
                   Inscription
                 </Button>
               </>

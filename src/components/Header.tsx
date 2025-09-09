@@ -11,11 +11,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 export const Header = () => {
   const { user, signOut, loading } = useAuth();
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -43,12 +52,20 @@ export const Header = () => {
 
   const handleSignOut = async () => {
     await signOut();
+    setMobileMenuOpen(false);
     navigate('/');
   };
 
   const handleHomeClick = () => {
     console.log('Clic sur le bouton d\'accueil');
+    setMobileMenuOpen(false);
     navigate('/');
+  };
+
+  const handleNavigate = (path: string, label: string) => {
+    console.log(`Navigation vers ${label}`);
+    setMobileMenuOpen(false);
+    navigate(path);
   };
 
   return (
@@ -61,6 +78,7 @@ export const Header = () => {
             </button>
           </div>
           
+          {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-6">
             <button 
               onClick={() => {
@@ -100,6 +118,7 @@ export const Header = () => {
             </button>
           </nav>
 
+          {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center space-x-4">
             <div className="flex items-center space-x-2 text-sm text-muted-foreground">
               <Phone className="h-4 w-4" />
@@ -192,9 +211,121 @@ export const Header = () => {
             )}
           </div>
 
-          <Button variant="ghost" size="sm" className="md:hidden">
-            <Menu className="h-5 w-5" />
-          </Button>
+          {/* Mobile Menu */}
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="md:hidden"
+                onClick={() => console.log('Menu mobile ouvert')}
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-80">
+              <SheetHeader>
+                <SheetTitle>Menu</SheetTitle>
+                <SheetDescription>
+                  Navigation et compte utilisateur
+                </SheetDescription>
+              </SheetHeader>
+              
+              <div className="mt-6 space-y-4">
+                {/* Navigation Links */}
+                <div className="space-y-3">
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start"
+                    onClick={() => handleNavigate('/', 'Accueil')}
+                  >
+                    Accueil
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start"
+                    onClick={() => handleNavigate('/products', 'Produits')}
+                  >
+                    Produits
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start"
+                    onClick={() => handleNavigate('/producers', 'Producteurs')}
+                  >
+                    Producteurs
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start"
+                    onClick={() => handleNavigate('/buyers', 'Acheteurs')}
+                  >
+                    Acheteurs
+                  </Button>
+                </div>
+
+                <div className="border-t pt-4">
+                  <div className="flex items-center space-x-2 text-sm text-muted-foreground mb-4">
+                    <Phone className="h-4 w-4" />
+                    <span>+225 0789363442</span>
+                  </div>
+
+                  {loading ? (
+                    <div className="space-y-2">
+                      <div className="w-full h-10 bg-muted rounded animate-pulse" />
+                      <div className="w-full h-10 bg-muted rounded animate-pulse" />
+                    </div>
+                  ) : user ? (
+                    <div className="space-y-3">
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start"
+                        onClick={() => handleNavigate('/dashboard', 'Tableau de bord')}
+                      >
+                        <User className="mr-2 h-4 w-4" />
+                        Tableau de bord
+                      </Button>
+                      {isAdmin && (
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start"
+                          onClick={() => handleNavigate('/admin', 'Administration')}
+                        >
+                          <Shield className="mr-2 h-4 w-4" />
+                          Administration
+                        </Button>
+                      )}
+                      <Button
+                        variant="destructive"
+                        className="w-full justify-start"
+                        onClick={handleSignOut}
+                      >
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Déconnexion
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => handleNavigate('/auth', 'Connexion')}
+                      >
+                        Connexion
+                      </Button>
+                      <Button
+                        variant="accent"
+                        className="w-full"
+                        onClick={() => handleNavigate('/auth', 'Inscription')}
+                      >
+                        Inscription
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </header>

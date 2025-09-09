@@ -31,6 +31,14 @@ export const BuyerDashboard = () => {
   const [isSearching, setIsSearching] = useState(false);
   const { user } = useAuth();
 
+  // Debug logs pour les onglets
+  console.log('BuyerDashboard - activeTab:', activeTab);
+
+  const handleTabChange = (value: string) => {
+    console.log('Changement d\'onglet de', activeTab, 'vers', value);
+    setActiveTab(value);
+  };
+
   const handleSearch = async (query?: string) => {
     const searchTerm = query || searchQuery.trim();
     if (!searchTerm) return;
@@ -183,7 +191,7 @@ export const BuyerDashboard = () => {
       </div>
 
       {/* Main Content */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="search">Rechercher</TabsTrigger>
           <TabsTrigger value="favorites">Favoris</TabsTrigger>

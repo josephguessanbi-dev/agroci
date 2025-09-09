@@ -19,18 +19,23 @@ export const Header = () => {
     navigate('/');
   };
 
+  const handleHomeClick = () => {
+    console.log('Clic sur le bouton d\'accueil');
+    navigate('/');
+  };
+
   return (
     <header className="bg-background border-b shadow-soft sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <button onClick={() => navigate('/')} className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+            <button onClick={handleHomeClick} className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent hover:opacity-80 transition-opacity">
               AgroConnect
             </button>
           </div>
           
           <nav className="hidden md:flex items-center space-x-6">
-            <button onClick={() => navigate('/')} className="text-foreground hover:text-primary transition-colors">
+            <button onClick={handleHomeClick} className="text-foreground hover:text-primary transition-colors font-medium">
               Accueil
             </button>
             <button onClick={() => navigate('/products')} className="text-foreground hover:text-primary transition-colors">

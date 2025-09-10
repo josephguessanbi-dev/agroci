@@ -90,6 +90,7 @@ export type Database = {
         Row: {
           created_at: string | null
           description: string | null
+          hidden: boolean | null
           id: string
           image_url: string | null
           localisation: string | null
@@ -105,6 +106,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           description?: string | null
+          hidden?: boolean | null
           id?: string
           image_url?: string | null
           localisation?: string | null
@@ -120,6 +122,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           description?: string | null
+          hidden?: boolean | null
           id?: string
           image_url?: string | null
           localisation?: string | null
@@ -150,6 +153,7 @@ export type Database = {
           pays: string
           prenom: string
           region: string | null
+          suspended: boolean | null
           type_activite: string | null
           updated_at: string | null
           user_id: string
@@ -164,6 +168,7 @@ export type Database = {
           pays: string
           prenom: string
           region?: string | null
+          suspended?: boolean | null
           type_activite?: string | null
           updated_at?: string | null
           user_id: string
@@ -178,6 +183,7 @@ export type Database = {
           pays?: string
           prenom?: string
           region?: string | null
+          suspended?: boolean | null
           type_activite?: string | null
           updated_at?: string | null
           user_id?: string
@@ -276,6 +282,10 @@ export type Database = {
         }
         Returns: string
       }
+      delete_user_account: {
+        Args: { profile_id: string }
+        Returns: string
+      }
       get_interested_buyers: {
         Args: { producer_user_id: string }
         Returns: {
@@ -321,6 +331,14 @@ export type Database = {
       }
       promote_to_admin: {
         Args: { user_email: string }
+        Returns: string
+      }
+      toggle_product_visibility: {
+        Args: { product_id: string }
+        Returns: string
+      }
+      toggle_user_suspension: {
+        Args: { profile_id: string }
         Returns: string
       }
     }

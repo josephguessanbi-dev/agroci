@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Check, X, Eye, Shield, TrendingUp, Users, Package, Clock } from "lucide-react";
+import { Loader2, Check, X, Eye, Shield, TrendingUp, Users, Package, Clock, UserMinus, EyeOff, Trash2, Ban, UserCheck } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -15,6 +15,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface Product {
   id: string;
@@ -25,6 +36,7 @@ interface Product {
   localisation: string;
   image_url: string;
   status: 'en_attente' | 'approuve' | 'rejete';
+  hidden: boolean;
   created_at: string;
   producteur: {
     nom: string;
@@ -33,6 +45,19 @@ interface Product {
     pays: string;
     region: string;
   };
+}
+
+interface User {
+  id: string;
+  nom: string;
+  prenom: string;
+  pays: string;
+  region: string;
+  whatsapp: string;
+  user_type: 'producteur' | 'acheteur' | 'admin';
+  verified: boolean;
+  suspended: boolean;
+  created_at: string;
 }
 
 interface AdminStats {
@@ -48,6 +73,8 @@ export const AdminDashboard = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [stats, setStats] = useState<AdminStats>({
     totalProducts: 0,
     pendingProducts: 0,
@@ -57,13 +84,22 @@ export const AdminDashboard = () => {
     totalBuyers: 0
   });
   const [loadingProducts, setLoadingProducts] = useState(true);
+  const [loadingAllProducts, setLoadingAllProducts] = useState(true);
+  const [loadingUsers, setLoadingUsers] = useState(true);
   const [updatingProduct, setUpdatingProduct] = useState<string | null>(null);
+  const [updatingUser, setUpdatingUser] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
     fetchPendingProducts();
     fetchStats();
-  }, []);
+    if (activeTab === 'users') {
+      fetchAllUsers();
+    }
+    if (activeTab === 'products') {
+      fetchAllProducts();
+    }
+  }, [activeTab]);
 
   const fetchStats = async () => {
     try {
@@ -130,9 +166,10 @@ export const AdminDashboard = () => {
         throw error;
       }
 
-      const formattedProducts = data.map(product => ({
+      const formattedProducts = data.map((product: any) => ({
         ...product,
-        producteur: product.profiles
+        producteur: product.profiles,
+        hidden: product.hidden || false
       }));
 
       setProducts(formattedProducts);
@@ -172,6 +209,182 @@ export const AdminDashboard = () => {
       toast({
         title: "Erreur",
         description: "Impossible de mettre à jour le produit",
+        variant: "destructive"
+      });
+    } finally {
+      setUpdatingProduct(null);
+    }
+  };
+
+  const fetchAllUsers = async () => {
+    try {
+      setLoadingUsers(true);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      setUsers(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les utilisateurs",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  const fetchAllProducts = async () => {
+    try {
+      setLoadingAllProducts(true);
+      const { data, error } = await supabase
+        .from('products')
+        .select(`
+          id,
+          nom,
+          prix,
+          quantite,
+          description,
+          localisation,
+          image_url,
+          status,
+          hidden,
+          created_at,
+          profiles!products_producteur_id_fkey (
+            nom,
+            prenom,
+            whatsapp,
+            pays,
+            region
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const formattedProducts = data.map(product => ({
+        ...product,
+        producteur: product.profiles
+      }));
+
+      setAllProducts(formattedProducts);
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger tous les produits",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingAllProducts(false);
+    }
+  };
+
+  const toggleUserSuspension = async (userId: string) => {
+    setUpdatingUser(userId);
+    try {
+      const { data, error } = await supabase.rpc('toggle_user_suspension', {
+        profile_id: userId
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Statut mis à jour",
+        description: data,
+      });
+
+      fetchAllUsers();
+      fetchStats();
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour le statut",
+        variant: "destructive"
+      });
+    } finally {
+      setUpdatingUser(null);
+    }
+  };
+
+  const deleteUser = async (userId: string) => {
+    setUpdatingUser(userId);
+    try {
+      const { data, error } = await supabase.rpc('delete_user_account', {
+        profile_id: userId
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Utilisateur supprimé",
+        description: data,
+      });
+
+      fetchAllUsers();
+      fetchStats();
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer l'utilisateur",
+        variant: "destructive"
+      });
+    } finally {
+      setUpdatingUser(null);
+    }
+  };
+
+  const toggleProductVisibility = async (productId: string) => {
+    setUpdatingProduct(productId);
+    try {
+      const { data, error } = await supabase.rpc('toggle_product_visibility', {
+        product_id: productId
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Visibilité mise à jour",
+        description: data,
+      });
+
+      fetchAllProducts();
+      fetchStats();
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour la visibilité",
+        variant: "destructive"
+      });
+    } finally {
+      setUpdatingProduct(null);
+    }
+  };
+
+  const deleteProduct = async (productId: string) => {
+    setUpdatingProduct(productId);
+    try {
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', productId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Produit supprimé",
+        description: "Le produit a été supprimé définitivement",
+      });
+
+      fetchAllProducts();
+      fetchStats();
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer le produit",
         variant: "destructive"
       });
     } finally {
@@ -232,7 +445,7 @@ export const AdminDashboard = () => {
 
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
           <TabsTrigger value="validation">
             Validation des produits
@@ -242,6 +455,8 @@ export const AdminDashboard = () => {
               </Badge>
             )}
           </TabsTrigger>
+          <TabsTrigger value="users">Utilisateurs</TabsTrigger>
+          <TabsTrigger value="products">Tous les produits</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -409,6 +624,274 @@ export const AdminDashboard = () => {
                     </TableBody>
                   </Table>
                 </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="users" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                Gestion des utilisateurs
+                <Badge variant="secondary">{users.length} utilisateur(s)</Badge>
+              </CardTitle>
+              <CardDescription>
+                Gérer tous les utilisateurs de la plateforme
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loadingUsers ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  <span className="ml-2 text-muted-foreground">Chargement des utilisateurs...</span>
+                </div>
+              ) : users.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Aucun utilisateur trouvé</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Utilisateur</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Localisation</TableHead>
+                      <TableHead>Statut</TableHead>
+                      <TableHead>Date d'inscription</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {users.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{user.prenom} {user.nom}</p>
+                            <p className="text-sm text-muted-foreground">{user.whatsapp}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={
+                            user.user_type === 'admin' ? 'default' : 
+                            user.user_type === 'producteur' ? 'secondary' : 'outline'
+                          }>
+                            {user.user_type}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="text-sm">{user.pays}</p>
+                            {user.region && <p className="text-xs text-muted-foreground">{user.region}</p>}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col gap-1">
+                            {user.verified && <Badge variant="secondary" className="text-xs">Vérifié</Badge>}
+                            {user.suspended && <Badge variant="destructive" className="text-xs">Suspendu</Badge>}
+                            {!user.verified && !user.suspended && <Badge variant="outline" className="text-xs">Actif</Badge>}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {new Date(user.created_at).toLocaleDateString('fr-FR')}
+                        </TableCell>
+                        <TableCell>
+                          {user.user_type !== 'admin' && (
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant={user.suspended ? "default" : "outline"}
+                                onClick={() => toggleUserSuspension(user.id)}
+                                disabled={updatingUser === user.id}
+                              >
+                                {updatingUser === user.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : user.suspended ? (
+                                  <UserCheck className="h-4 w-4" />
+                                ) : (
+                                  <Ban className="h-4 w-4" />
+                                )}
+                              </Button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    disabled={updatingUser === user.id}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Supprimer l'utilisateur</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Êtes-vous sûr de vouloir supprimer définitivement {user.prenom} {user.nom} ? 
+                                      Cette action est irréversible et supprimera tous ses produits.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Annuler</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => deleteUser(user.id)}
+                                      className="bg-destructive text-destructive-foreground"
+                                    >
+                                      Supprimer
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="products" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                Tous les produits
+                <Badge variant="secondary">{allProducts.length} produit(s)</Badge>
+              </CardTitle>
+              <CardDescription>
+                Gérer tous les produits de la plateforme
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loadingAllProducts ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  <span className="ml-2 text-muted-foreground">Chargement des produits...</span>
+                </div>
+              ) : allProducts.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Aucun produit trouvé</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Image</TableHead>
+                      <TableHead>Produit</TableHead>
+                      <TableHead>Producteur</TableHead>
+                      <TableHead>Prix</TableHead>
+                      <TableHead>Statut</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {allProducts.map((product) => (
+                      <TableRow key={product.id}>
+                        <TableCell>
+                          {product.image_url ? (
+                            <img
+                              src={product.image_url}
+                              alt={product.nom}
+                              className="w-12 h-12 object-cover rounded-lg"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
+                              <Eye className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{product.nom}</p>
+                            <p className="text-sm text-muted-foreground">Qté: {product.quantite}</p>
+                            {product.localisation && (
+                              <p className="text-xs text-muted-foreground">📍 {product.localisation}</p>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">
+                              {product.producteur.prenom} {product.producteur.nom}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {product.producteur.pays}
+                            </p>
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {product.prix.toLocaleString()} FCFA
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col gap-1">
+                            <Badge variant={
+                              product.status === 'approuve' ? 'default' :
+                              product.status === 'en_attente' ? 'secondary' : 'destructive'
+                            }>
+                              {product.status}
+                            </Badge>
+                            {product.hidden && <Badge variant="outline" className="text-xs">Caché</Badge>}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {new Date(product.created_at).toLocaleDateString('fr-FR')}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant={product.hidden ? "default" : "outline"}
+                              onClick={() => toggleProductVisibility(product.id)}
+                              disabled={updatingProduct === product.id}
+                            >
+                              {updatingProduct === product.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : product.hidden ? (
+                                <Eye className="h-4 w-4" />
+                              ) : (
+                                <EyeOff className="h-4 w-4" />
+                              )}
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  disabled={updatingProduct === product.id}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Supprimer le produit</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Êtes-vous sûr de vouloir supprimer définitivement le produit "{product.nom}" ? 
+                                    Cette action est irréversible.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Annuler</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => deleteProduct(product.id)}
+                                    className="bg-destructive text-destructive-foreground"
+                                  >
+                                    Supprimer
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               )}
             </CardContent>
           </Card>

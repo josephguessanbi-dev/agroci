@@ -1,11 +1,136 @@
+import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Filter } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { ContactProducerModal } from "@/components/ContactProducerModal";
+import { useToast } from "@/hooks/use-toast";
+import { Search, Filter, MapPin, MessageSquare, Loader2, Package } from "lucide-react";
+
+interface Product {
+  id: string;
+  nom: string;
+  prix: number;
+  quantite: string;
+  description: string;
+  localisation: string;
+  image_url: string;
+  producteur_id: string;
+  created_at: string;
+}
+
+interface Producer {
+  nom: string;
+  prenom: string;
+  whatsapp: string;
+}
 
 const Products = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [contactModalOpen, setContactModalOpen] = useState(false);
+  const [selectedProducer, setSelectedProducer] = useState<Producer | null>(null);
+  const [selectedProductName, setSelectedProductName] = useState("");
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('products')
+        .select(`
+          id,
+          nom,
+          prix,
+          quantite,
+          description,
+          localisation,
+          image_url,
+          producteur_id,
+          created_at,
+          profiles!products_producteur_id_fkey (
+            nom,
+            prenom,
+            whatsapp
+          )
+        `)
+        .eq('status', 'approuve')
+        .eq('hidden', false)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      setProducts(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les produits",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleContactProducer = async (productId: string, productName: string) => {
+    if (!user) {
+      toast({
+        title: "Connexion requise",
+        description: "Veuillez vous connecter pour contacter un producteur",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.rpc('get_producer_contact_info', {
+        producer_profile_id: products.find(p => p.id === productId)?.producteur_id,
+        product_id: productId
+      });
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const producerInfo = data[0];
+        setSelectedProducer({
+          nom: producerInfo.nom,
+          prenom: producerInfo.prenom,
+          whatsapp: producerInfo.whatsapp
+        });
+        setSelectedProductName(productName);
+        setContactModalOpen(true);
+      } else {
+        toast({
+          title: "Erreur",
+          description: "Impossible de récupérer les informations du producteur",
+          variant: "destructive"
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de contacter le producteur",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const filteredProducts = products.filter(product =>
+    product.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.localisation?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -23,36 +148,106 @@ const Products = () => {
           <div className="flex-1">
             <Input 
               placeholder="Rechercher un produit..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full"
             />
           </div>
-          <Button>
-            <Search className="mr-2 h-4 w-4" />
-            Rechercher
-          </Button>
           <Button variant="outline">
             <Filter className="mr-2 h-4 w-4" />
             Filtrer
           </Button>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Catalogue des Produits</CardTitle>
-            <CardDescription>
-              Explorez notre large sélection de produits agricoles
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center py-12">
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <span className="ml-2 text-muted-foreground">Chargement des produits...</span>
+          </div>
+        ) : filteredProducts.length === 0 ? (
+          <Card>
+            <CardContent className="text-center py-12">
+              <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p className="text-muted-foreground">
-                Les produits apparaîtront ici une fois que des producteurs les auront ajoutés.
+                {searchTerm ? "Aucun produit trouvé pour votre recherche" : "Aucun produit disponible pour le moment"}
               </p>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredProducts.map((product) => {
+              const productData = product as any;
+              const producer = productData.profiles;
+              
+              return (
+                <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                  <div className="aspect-video relative bg-muted">
+                    {product.image_url ? (
+                      <img
+                        src={product.image_url}
+                        alt={product.nom}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-full">
+                        <Package className="h-12 w-12 text-muted-foreground" />
+                      </div>
+                    )}
+                  </div>
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      {product.nom}
+                      <Badge variant="secondary" className="text-lg font-bold">
+                        {product.prix.toLocaleString()} FCFA
+                      </Badge>
+                    </CardTitle>
+                    <CardDescription>
+                      {product.description}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Quantité:</span>
+                        <span className="font-medium">{product.quantite}</span>
+                      </div>
+                      {product.localisation && (
+                        <div className="flex items-center text-sm text-muted-foreground">
+                          <MapPin className="h-4 w-4 mr-1" />
+                          {product.localisation}
+                        </div>
+                      )}
+                      {producer && (
+                        <div className="text-sm">
+                          <span className="text-muted-foreground">Producteur:</span>
+                          <span className="font-medium ml-1">
+                            {producer.prenom} {producer.nom}
+                          </span>
+                        </div>
+                      )}
+                      <Button 
+                        onClick={() => handleContactProducer(product.id, product.nom)}
+                        className="w-full mt-4"
+                      >
+                        <MessageSquare className="h-4 w-4 mr-2" />
+                        Contacter le producteur
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
       </main>
       <Footer />
+      
+      <ContactProducerModal
+        open={contactModalOpen}
+        onOpenChange={setContactModalOpen}
+        producer={selectedProducer}
+        productName={selectedProductName}
+      />
     </div>
   );
 };

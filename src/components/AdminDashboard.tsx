@@ -393,6 +393,33 @@ export const AdminDashboard = () => {
     }
   };
 
+  const verifyProducer = async (userId: string) => {
+    setUpdatingUser(userId);
+    try {
+      const { data, error } = await supabase.rpc('verify_producer', {
+        profile_id: userId
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Producteur vérifié",
+        description: data,
+      });
+
+      fetchAllUsers();
+      fetchStats();
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de vérifier le producteur",
+        variant: "destructive"
+      });
+    } finally {
+      setUpdatingUser(null);
+    }
+  };
+
   const navigateToTab = (tab: string, filter?: string) => {
     setActiveTab(tab);
     if (filter && tab === 'products') {
@@ -727,6 +754,21 @@ export const AdminDashboard = () => {
                         <TableCell>
                           {user.user_type !== 'admin' && (
                             <div className="flex gap-2">
+                              {user.user_type === 'producteur' && !user.verified && (
+                                <Button
+                                  size="sm"
+                                  variant="default"
+                                  onClick={() => verifyProducer(user.id)}
+                                  disabled={updatingUser === user.id}
+                                  className="bg-green-600 hover:bg-green-700"
+                                >
+                                  {updatingUser === user.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Check className="h-4 w-4" />
+                                  )}
+                                </Button>
+                              )}
                               <Button
                                 size="sm"
                                 variant={user.suspended ? "default" : "outline"}

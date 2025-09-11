@@ -341,6 +341,10 @@ export type Database = {
         Args: { profile_id: string }
         Returns: string
       }
+      verify_producer: {
+        Args: { profile_id: string }
+        Returns: string
+      }
     }
     Enums: {
       product_status: "en_attente" | "approuve" | "rejete"

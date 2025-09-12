@@ -3,10 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Search, Heart, History, Filter, ShoppingCart, MapPin, MessageCircle } from "lucide-react";
+import { Search, Heart, History, Filter, ShoppingCart, MapPin, MessageCircle, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { ProductDetailsModal } from "./ProductDetailsModal";
 
 interface Product {
   id: string;
@@ -15,12 +16,14 @@ interface Product {
   prix: number;
   quantite: string;
   localisation: string;
-  image_url?: string;
+  image_url: string;
   producteur_id: string;
+  created_at: string;
   profiles?: {
     nom: string;
     prenom: string;
     verified: boolean;
+    whatsapp: string;
   };
 }
 
@@ -29,6 +32,8 @@ export const BuyerDashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const { user } = useAuth();
 
   // Debug logs pour les onglets
@@ -53,7 +58,8 @@ export const BuyerDashboard = () => {
           profiles:producteur_id (
             nom,
             prenom,
-            verified
+            verified,
+            whatsapp
           )
         `)
         .eq('status', 'approuve')
@@ -130,6 +136,48 @@ export const BuyerDashboard = () => {
     } catch (error) {
       console.error('Erreur lors du clic WhatsApp:', error);
       toast.error("Erreur lors de l'ouverture de WhatsApp");
+    }
+  };
+
+  const handleViewProduct = async (product: Product) => {
+    // Record the view
+    if (user) {
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (profile) {
+          await supabase
+            .from('product_views')
+            .insert({
+              product_id: product.id,
+              viewer_id: profile.id
+            });
+
+          // Increment views count
+          await supabase
+            .from('products')
+            .update({ 
+              views_count: (product as any).views_count ? (product as any).views_count + 1 : 1 
+            })
+            .eq('id', product.id);
+        }
+      } catch (error) {
+        console.error('Error recording view:', error);
+      }
+    }
+
+    setSelectedProduct(product);
+    setDetailsModalOpen(true);
+  };
+
+  const handleContactProducer = (productId: string, productName: string) => {
+    const product = searchResults.find(p => p.id === productId);
+    if (product) {
+      handleWhatsAppClick(product);
     }
   };
 
@@ -301,25 +349,35 @@ export const BuyerDashboard = () => {
                             )}
                           </div>
                           
-                          {/* Bouton WhatsApp - toujours affiché pour les producteurs vérifiés */}
+                          {/* Boutons d'action */}
                           <div className="flex gap-2">
+                            <Button 
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleViewProduct(product)}
+                              className="flex-1"
+                            >
+                              <Eye className="mr-2 h-4 w-4" />
+                              Voir
+                            </Button>
                             {product.profiles?.verified ? (
                               <Button 
                                 size="sm" 
-                                className="bg-green-600 hover:bg-green-700 text-white"
+                                className="bg-green-600 hover:bg-green-700 text-white flex-1"
                                 onClick={() => handleWhatsAppClick(product)}
                               >
                                 <MessageCircle className="mr-2 h-4 w-4" />
-                                Contacter sur WhatsApp
+                                Contacter
                               </Button>
                             ) : (
                               <Button 
                                 size="sm" 
                                 variant="outline"
                                 disabled
+                                className="flex-1"
                               >
                                 <MessageCircle className="mr-2 h-4 w-4" />
-                                Producteur non vérifié
+                                Non vérifié
                               </Button>
                             )}
                           </div>
@@ -431,6 +489,14 @@ export const BuyerDashboard = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Modal pour voir les détails du produit */}
+      <ProductDetailsModal
+        product={selectedProduct}
+        isOpen={detailsModalOpen}
+        onClose={() => setDetailsModalOpen(false)}
+        onContactProducer={handleContactProducer}
+      />
     </div>
   );
 };

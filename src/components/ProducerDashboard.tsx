@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Package, BarChart3, Eye, MessageCircle, Edit, Trash2 } from "lucide-react";
+import { Plus, Package, BarChart3, Eye, MessageCircle, Edit, Trash2, User } from "lucide-react";
 import { AddProductForm } from "./AddProductForm";
+import { EditProductModal } from "./EditProductModal";
+import { EditProfileModal } from "./EditProfileModal";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -32,6 +34,9 @@ export const ProducerDashboard = () => {
     totalClicks: 0,
     conversionRate: 0
   });
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [isEditProductModalOpen, setIsEditProductModalOpen] = useState(false);
+  const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -129,6 +134,19 @@ export const ProducerDashboard = () => {
     }
   };
 
+  const handleEditProduct = (product: Product) => {
+    setEditingProduct(product);
+    setIsEditProductModalOpen(true);
+  };
+
+  const handleProductUpdated = () => {
+    fetchProducts();
+  };
+
+  const handleProfileUpdated = () => {
+    // Optionally refresh any profile-related data
+  };
+
   useEffect(() => {
     fetchProducts();
   }, [user]);
@@ -192,10 +210,11 @@ export const ProducerDashboard = () => {
 
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="overview">Aperçu</TabsTrigger>
           <TabsTrigger value="products">Mes Produits</TabsTrigger>
           <TabsTrigger value="add-product">Ajouter Produit</TabsTrigger>
+          <TabsTrigger value="profile">Mon Profil</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -304,7 +323,11 @@ export const ProducerDashboard = () => {
                         </div>
                       </div>
                       <div className="flex space-x-2">
-                        <Button variant="outline" size="sm" disabled>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleEditProduct(product)}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button 
@@ -326,7 +349,49 @@ export const ProducerDashboard = () => {
         <TabsContent value="add-product" className="space-y-6">
           <AddProductForm onProductAdded={handleProductAdded} />
         </TabsContent>
+
+        <TabsContent value="profile" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Mon Profil</CardTitle>
+              <CardDescription>
+                Gérez vos informations personnelles
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div>
+                  <h3 className="font-semibold">Modifier mes informations</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Mettez à jour vos informations de contact et professionnelles
+                  </p>
+                </div>
+                <Button onClick={() => setIsEditProfileModalOpen(true)}>
+                  <User className="mr-2 h-4 w-4" />
+                  Modifier le profil
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
+
+      {/* Modals */}
+      <EditProductModal
+        product={editingProduct}
+        isOpen={isEditProductModalOpen}
+        onClose={() => {
+          setIsEditProductModalOpen(false);
+          setEditingProduct(null);
+        }}
+        onProductUpdated={handleProductUpdated}
+      />
+
+      <EditProfileModal
+        isOpen={isEditProfileModalOpen}
+        onClose={() => setIsEditProfileModalOpen(false)}
+        onProfileUpdated={handleProfileUpdated}
+      />
     </div>
   );
 };

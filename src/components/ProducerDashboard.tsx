@@ -22,6 +22,7 @@ interface Product {
   created_at: string;
   views_count: number;
   whatsapp_clicks: number;
+  actualWhatsappClicks?: number;
 }
 
 export const ProducerDashboard = () => {
@@ -74,12 +75,38 @@ export const ProducerDashboard = () => {
       if (error) throw error;
       
       const products = productsData || [];
-      setProducts(products);
+      
+      // Fetch WhatsApp clicks for each product
+      const productIds = products.map(p => p.id);
+      let clicksData: any[] = [];
+      
+      if (productIds.length > 0) {
+        const { data: whatsappClicks } = await supabase
+          .from('whatsapp_clicks')
+          .select('product_id')
+          .in('product_id', productIds);
+        
+        clicksData = whatsappClicks || [];
+      }
+      
+      // Count clicks per product
+      const clickCounts = clicksData.reduce((acc: Record<string, number>, click) => {
+        acc[click.product_id] = (acc[click.product_id] || 0) + 1;
+        return acc;
+      }, {});
+      
+      // Add click counts to products
+      const productsWithClicks = products.map(product => ({
+        ...product,
+        actualWhatsappClicks: clickCounts[product.id] || 0
+      }));
+      
+      setProducts(productsWithClicks);
       
       // Calculate stats
       const totalProducts = products.length;
       const totalViews = products.reduce((sum, p) => sum + (p.views_count || 0), 0);
-      const totalClicks = products.reduce((sum, p) => sum + (p.whatsapp_clicks || 0), 0);
+      const totalClicks = (Object.values(clickCounts) as number[]).reduce((sum: number, count: number) => sum + count, 0);
       const conversionRate = totalViews > 0 ? Math.round((totalClicks / totalViews) * 100) : 0;
       
       setStats({
@@ -318,8 +345,8 @@ export const ProducerDashboard = () => {
                             {product.status === 'approuve' ? 'Approuvé' :
                              product.status === 'en_attente' ? 'En attente' : 'Rejeté'}
                           </span>
-                          <span>{product.views_count || 0} vues</span>
-                          <span>{product.whatsapp_clicks || 0} clics</span>
+                           <span>{product.views_count || 0} vues</span>
+                           <span>{product.actualWhatsappClicks || 0} clics</span>
                         </div>
                       </div>
                       <div className="flex space-x-2">

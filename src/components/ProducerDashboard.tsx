@@ -50,6 +50,7 @@ export const ProducerDashboard = () => {
     
     try {
       setLoading(true);
+      console.log('Fetching products for user:', user.id);
       
       // Get user profile first
       const { data: profile, error: profileError } = await supabase
@@ -58,13 +59,18 @@ export const ProducerDashboard = () => {
         .eq('user_id', user.id)
         .maybeSingle();
       
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('Profile error:', profileError);
+        throw profileError;
+      }
       if (!profile) {
-        console.warn('No profile found for user');
+        console.warn('No profile found for user:', user.id);
         setProducts([]);
         setStats({ totalProducts: 0, totalViews: 0, totalClicks: 0, conversionRate: 0 });
         return;
       }
+      
+      console.log('Profile found:', profile.id);
       
       // Fetch products
       const { data: productsData, error } = await supabase
@@ -73,9 +79,13 @@ export const ProducerDashboard = () => {
         .eq('producteur_id', profile.id)
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Products fetch error:', error);
+        throw error;
+      }
       
       const products = productsData || [];
+      console.log('Products found:', products.length);
       
       // Fetch WhatsApp clicks and views for each product
       const productIds = products.map(p => p.id);
@@ -83,6 +93,7 @@ export const ProducerDashboard = () => {
       let viewsData: any[] = [];
       
       if (productIds.length > 0) {
+        console.log('Fetching stats for products:', productIds);
         const [whatsappClicksResult, viewsResult] = await Promise.all([
           supabase
             .from('whatsapp_clicks')
@@ -94,8 +105,19 @@ export const ProducerDashboard = () => {
             .in('product_id', productIds)
         ]);
         
-        clicksData = whatsappClicksResult.data || [];
-        viewsData = viewsResult.data || [];
+        if (whatsappClicksResult.error) {
+          console.error('WhatsApp clicks fetch error:', whatsappClicksResult.error);
+        } else {
+          clicksData = whatsappClicksResult.data || [];
+          console.log('WhatsApp clicks found:', clicksData.length);
+        }
+        
+        if (viewsResult.error) {
+          console.error('Views fetch error:', viewsResult.error);
+        } else {
+          viewsData = viewsResult.data || [];
+          console.log('Views found:', viewsData.length);
+        }
       }
       
       // Count clicks per product
@@ -124,6 +146,8 @@ export const ProducerDashboard = () => {
       const totalViews = (Object.values(viewCounts) as number[]).reduce((sum: number, count: number) => sum + count, 0);
       const totalClicks = (Object.values(clickCounts) as number[]).reduce((sum: number, count: number) => sum + count, 0);
       const conversionRate = totalViews > 0 ? Math.round((totalClicks / totalViews) * 100) : 0;
+      
+      console.log('Calculated stats:', { totalProducts, totalViews, totalClicks, conversionRate });
       
       setStats({
         totalProducts,

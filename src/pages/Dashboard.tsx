@@ -38,10 +38,16 @@ const Dashboard = () => {
         .from('profiles')
         .select('user_type, nom, prenom')
         .eq('user_id', user!.id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching profile:', error);
+        navigate('/auth');
+        return;
+      }
+
+      if (!data) {
+        console.error('No profile found for user:', user!.id);
         navigate('/auth');
         return;
       }

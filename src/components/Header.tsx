@@ -74,7 +74,7 @@ export const Header = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <button onClick={handleHomeClick} className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent hover:opacity-80 transition-opacity">
-              AgroConnect
+              AgroCI
             </button>
           </div>
           

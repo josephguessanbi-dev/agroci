@@ -1,9 +1,13 @@
-import cornIcon from "@/assets/corn-icon.jpg";
-import riceIcon from "@/assets/rice-icon.jpg";
-import cassavaIcon from "@/assets/cassava-icon.jpg";
-import yamIcon from "@/assets/yam-icon.jpg";
-import tomatoIcon from "@/assets/tomato-icon.jpg";
-import onionIcon from "@/assets/onion-icon.jpg";
+import cornIcon from "@/assets/corn-real.jpg";
+import riceIcon from "@/assets/rice-real.jpg";
+import cassavaIcon from "@/assets/cassava-real.jpg";
+import yamIcon from "@/assets/yam-real.jpg";
+import tomatoIcon from "@/assets/tomato-real.jpg";
+import onionIcon from "@/assets/onion-real.jpg";
+import plantainIcon from "@/assets/plantain-real.jpg";
+import peasIcon from "@/assets/peas-real.jpg";
+import sweetPotatoIcon from "@/assets/sweet-potato-real.jpg";
+import cabbageIcon from "@/assets/cabbage-real.jpg";
 
 const products = [
   { name: "Maïs", icon: cornIcon, description: "Grains de qualité premium" },
@@ -12,6 +16,10 @@ const products = [
   { name: "Igname", icon: yamIcon, description: "Tubercules de première qualité" },
   { name: "Tomates", icon: tomatoIcon, description: "Fraîches et savoureuses" },
   { name: "Oignons", icon: onionIcon, description: "Calibres variés" },
+  { name: "Banane plantain", icon: plantainIcon, description: "Fruits verts de qualité" },
+  { name: "Petits pois", icon: peasIcon, description: "Légumineuses fraîches" },
+  { name: "Patate douce", icon: sweetPotatoIcon, description: "Tubercules sucrés" },
+  { name: "Chou", icon: cabbageIcon, description: "Légumes verts frais" },
 ];
 
 export const PopularProducts = () => {
@@ -28,7 +36,7 @@ export const PopularProducts = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
           {products.map((product) => (
             <div
               key={product.name}

@@ -7,7 +7,7 @@ export const Footer = () => {
         <div className="grid md:grid-cols-4 gap-8">
           <div className="space-y-4">
             <h3 className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-              AgroConnect
+              AgroCI
             </h3>
             <p className="text-sm text-muted-foreground">
               La plateforme de référence pour la mise en relation entre producteurs 
@@ -70,7 +70,7 @@ export const Footer = () => {
 
         <div className="border-t mt-8 pt-8 text-center">
           <p className="text-sm text-muted-foreground">
-            © 2024 AgroConnect. Tous droits réservés. Plateforme de mise en relation agricole.
+            © 2024 AgroCI. Tous droits réservés. Plateforme de mise en relation agricole.
           </p>
         </div>
       </div>

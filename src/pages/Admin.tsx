@@ -191,11 +191,12 @@ const Admin = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
       <Header />
       <main className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">
+        {/* Header Section with Gradient */}
+        <div className="mb-8 p-6 rounded-2xl bg-gradient-to-r from-primary/10 via-blue-500/10 to-purple-500/10 border border-primary/20">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent mb-2">
             Administration
           </h1>
           <p className="text-muted-foreground">
@@ -203,11 +204,51 @@ const Admin = () => {
           </p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 shadow-lg hover:shadow-emerald-200/50 transition-all duration-300">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-emerald-800 text-sm font-medium">En attente</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-emerald-900">{products.length}</div>
+              <p className="text-xs text-emerald-600">Produits à examiner</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 shadow-lg hover:shadow-blue-200/50 transition-all duration-300">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-blue-800 text-sm font-medium">Aujourd'hui</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-900">
+                {products.filter(p => new Date(p.created_at).toDateString() === new Date().toDateString()).length}
+              </div>
+              <p className="text-xs text-blue-600">Nouveaux produits</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 shadow-lg hover:shadow-purple-200/50 transition-all duration-300">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-purple-800 text-sm font-medium">Action requise</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-purple-900">{products.length > 0 ? '⚡' : '✅'}</div>
+              <p className="text-xs text-purple-600">{products.length > 0 ? 'Modération nécessaire' : 'Tout traité'}</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card className="shadow-xl border-0 bg-gradient-to-br from-card via-card to-muted/20">
+          <CardHeader className="bg-gradient-to-r from-primary/5 to-blue-500/5 rounded-t-lg border-b border-border/50">
+            <CardTitle className="flex items-center justify-between text-foreground">
               Produits en attente d'approbation
-              <Badge variant="secondary">{products.length} produit(s)</Badge>
+              <Badge 
+                variant="secondary" 
+                className="bg-gradient-to-r from-primary/20 to-blue-500/20 text-primary border-primary/30"
+              >
+                {products.length} produit(s)
+              </Badge>
             </CardTitle>
             <CardDescription>
               Examinez et approuvez ou refusez les nouveaux produits soumis par les producteurs
@@ -288,9 +329,9 @@ const Admin = () => {
                           <div className="flex gap-2">
                             <Button
                               size="sm"
-                              variant="default"
                               onClick={() => updateProductStatus(product.id, 'approuve')}
                               disabled={updatingProduct === product.id}
+                              className="bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white border-0 shadow-lg hover:shadow-emerald-200 transition-all duration-200"
                             >
                               {updatingProduct === product.id ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -300,9 +341,9 @@ const Admin = () => {
                             </Button>
                             <Button
                               size="sm"
-                              variant="destructive"
                               onClick={() => updateProductStatus(product.id, 'rejete')}
                               disabled={updatingProduct === product.id}
+                              className="bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white border-0 shadow-lg hover:shadow-red-200 transition-all duration-200"
                             >
                               {updatingProduct === product.id ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />

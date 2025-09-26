@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { MessageSquare, Phone } from "lucide-react";
+import { MessageSquare, Phone, Coins } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Producer {
+  id: string;
   nom: string;
   prenom: string;
   whatsapp: string;
@@ -15,33 +18,110 @@ interface ContactProducerModalProps {
   onOpenChange: (open: boolean) => void;
   producer: Producer | null;
   productName: string;
+  productId: string;
 }
 
-export const ContactProducerModal = ({ open, onOpenChange, producer, productName }: ContactProducerModalProps) => {
+export const ContactProducerModal = ({ open, onOpenChange, producer, productName, productId }: ContactProducerModalProps) => {
+  const { user } = useAuth();
   const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+  const [userCredits, setUserCredits] = useState<number | null>(null);
 
-  const handleWhatsAppContact = () => {
-    if (!producer) return;
-
-    const message = encodeURIComponent(
-      `Bonjour ${producer.prenom},\n\nJe suis intéressé(e) par votre produit "${productName}" que j'ai vu sur AgroConnect. Pourriez-vous me donner plus d'informations ?\n\nMerci !`
-    );
-    
-    // Format WhatsApp number - ensure it starts with + and remove any extra characters
-    let whatsappNumber = producer.whatsapp.replace(/[^\d+]/g, '');
-    if (!whatsappNumber.startsWith('+')) {
-      whatsappNumber = '+' + whatsappNumber;
+  // Charger les crédits de l'utilisateur quand la modal s'ouvre
+  useEffect(() => {
+    if (open && user) {
+      loadUserCredits();
     }
+  }, [open, user]);
 
-    const whatsappUrl = `https://wa.me/${whatsappNumber.replace('+', '')}?text=${message}`;
-    window.open(whatsappUrl, '_blank');
+  const loadUserCredits = async () => {
+    if (!user) return;
 
-    toast({
-      title: "Redirection vers WhatsApp",
-      description: "Vous allez être redirigé vers WhatsApp pour contacter le producteur.",
-    });
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('credits')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-    onOpenChange(false);
+      if (error) throw error;
+      setUserCredits(profile?.credits || 0);
+    } catch (error) {
+      console.error('Erreur lors du chargement des crédits:', error);
+    }
+  };
+
+  const handleWhatsAppContact = async () => {
+    if (!producer || !user) return;
+
+    setLoading(true);
+
+    try {
+      // Obtenir les IDs des profils
+      const { data: buyerProfile, error: buyerError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (buyerError || !buyerProfile) {
+        throw new Error('Profil acheteur non trouvé');
+      }
+
+      // Déduire les crédits via la fonction SQL
+      const { data: result, error: deductError } = await supabase
+        .rpc('deduct_credits_for_contact', {
+          buyer_profile_id: buyerProfile.id,
+          producer_profile_id: producer.id,
+          product_id: productId
+        });
+
+      if (deductError) {
+        throw deductError;
+      }
+
+      // Vérifier si la déduction a réussi
+      if (result.includes('Crédits insuffisants')) {
+        toast({
+          title: "Crédits insuffisants",
+          description: "Vous devez avoir au moins 1 crédit pour contacter ce producteur. Rechargez votre compte depuis la page Abonnements.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Si tout est OK, procéder au contact WhatsApp
+      const message = encodeURIComponent(
+        `Bonjour ${producer.prenom},\n\nJe suis intéressé(e) par votre produit "${productName}" que j'ai vu sur AgroConnect. Pourriez-vous me donner plus d'informations ?\n\nMerci !`
+      );
+      
+      // Format WhatsApp number - ensure it starts with + and remove any extra characters
+      let whatsappNumber = producer.whatsapp.replace(/[^\d+]/g, '');
+      if (!whatsappNumber.startsWith('+')) {
+        whatsappNumber = '+' + whatsappNumber;
+      }
+
+      const whatsappUrl = `https://wa.me/${whatsappNumber.replace('+', '')}?text=${message}`;
+      window.open(whatsappUrl, '_blank');
+
+      toast({
+        title: "Contact autorisé",
+        description: "1 crédit a été déduit. Vous allez être redirigé vers WhatsApp.",
+      });
+
+      // Recharger les crédits pour afficher la nouvelle valeur
+      loadUserCredits();
+      onOpenChange(false);
+
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message || "Une erreur s'est produite lors du contact",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!producer) return null;
@@ -66,13 +146,37 @@ export const ContactProducerModal = ({ open, onOpenChange, producer, productName
             <p><strong>WhatsApp :</strong> {producer.whatsapp}</p>
           </div>
 
+          {userCredits !== null && (
+            <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
+              <div className="flex items-center gap-2">
+                <Coins className="h-4 w-4 text-blue-600" />
+                <span className="text-sm font-medium text-blue-800">
+                  Vos crédits: {userCredits}
+                </span>
+              </div>
+              <p className="text-xs text-blue-600 mt-1">
+                Contacter ce producteur coûte 1 crédit
+              </p>
+            </div>
+          )}
+
           <div className="space-y-3">
             <Button 
               onClick={handleWhatsAppContact}
-              className="w-full bg-green-600 hover:bg-green-700 text-white"
+              disabled={loading || (userCredits !== null && userCredits < 1)}
+              className="w-full bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-400"
             >
-              <Phone className="h-4 w-4 mr-2" />
-              Contacter via WhatsApp
+              {loading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Vérification...
+                </>
+              ) : (
+                <>
+                  <Phone className="h-4 w-4 mr-2" />
+                  Contacter via WhatsApp (1 crédit)
+                </>
+              )}
             </Button>
             
             <Button 

@@ -491,6 +491,14 @@ export type Database = {
         }
         Returns: string
       }
+      deduct_credits_for_contact: {
+        Args: {
+          buyer_profile_id: string
+          producer_profile_id: string
+          product_id: string
+        }
+        Returns: string
+      }
       delete_user_account: {
         Args: { profile_id: string }
         Returns: string

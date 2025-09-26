@@ -39,6 +39,7 @@ interface Product {
 }
 
 interface Producer {
+  id: string;
   nom: string;
   prenom: string;
   whatsapp: string;
@@ -54,6 +55,7 @@ const Products = () => {
   const [contactModalOpen, setContactModalOpen] = useState(false);
   const [selectedProducer, setSelectedProducer] = useState<Producer | null>(null);
   const [selectedProductName, setSelectedProductName] = useState("");
+  const [selectedProductId, setSelectedProductId] = useState("");
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
@@ -112,8 +114,18 @@ const Products = () => {
     }
 
     try {
+      const product = products.find(p => p.id === productId);
+      if (!product) {
+        toast({
+          title: "Erreur",
+          description: "Produit non trouvé",
+          variant: "destructive"
+        });
+        return;
+      }
+
       const { data, error } = await supabase.rpc('get_producer_contact_info', {
-        producer_profile_id: products.find(p => p.id === productId)?.producteur_id,
+        producer_profile_id: product.profiles.id,
         product_id: productId
       });
 
@@ -122,11 +134,13 @@ const Products = () => {
       if (data && data.length > 0) {
         const producerInfo = data[0];
         setSelectedProducer({
+          id: product.profiles.id,
           nom: producerInfo.nom,
           prenom: producerInfo.prenom,
           whatsapp: producerInfo.whatsapp
         });
         setSelectedProductName(productName);
+        setSelectedProductId(productId);
         setContactModalOpen(true);
       } else {
         toast({
@@ -329,6 +343,7 @@ const Products = () => {
         onOpenChange={setContactModalOpen}
         producer={selectedProducer}
         productName={selectedProductName}
+        productId={selectedProductId}
       />
       
       <ProductDetailsModal

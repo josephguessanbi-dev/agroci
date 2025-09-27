@@ -25,6 +25,7 @@ export const Header = () => {
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userCredits, setUserCredits] = useState<number | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -38,12 +39,16 @@ export const Header = () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('user_type')
+        .select('user_type, credits')
         .eq('user_id', user!.id)
         .single();
 
       if (!error && data?.user_type === 'admin') {
         setIsAdmin(true);
+      }
+      
+      if (!error && data?.credits !== undefined) {
+        setUserCredits(data.credits);
       }
     } catch (error) {
       console.error('Error checking admin status:', error);
@@ -120,9 +125,16 @@ export const Header = () => {
 
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-              <Phone className="h-4 w-4" />
-              <span>+225 0789363442</span>
+            <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+              <div className="flex items-center space-x-2">
+                <Phone className="h-4 w-4" />
+                <span>+225 0789363442</span>
+              </div>
+              {user && userCredits !== null && (
+                <div className="flex items-center space-x-2 bg-primary/10 px-3 py-1 rounded-full">
+                  <span className="font-medium text-primary">💰 {userCredits} crédits</span>
+                </div>
+              )}
             </div>
             
             {loading ? (
@@ -265,9 +277,16 @@ export const Header = () => {
                 </div>
 
                 <div className="border-t pt-4">
-                  <div className="flex items-center space-x-2 text-sm text-muted-foreground mb-4">
-                    <Phone className="h-4 w-4" />
-                    <span>+225 0789363442</span>
+                  <div className="flex flex-col space-y-2 text-sm text-muted-foreground mb-4">
+                    <div className="flex items-center space-x-2">
+                      <Phone className="h-4 w-4" />
+                      <span>+225 0789363442</span>
+                    </div>
+                    {user && userCredits !== null && (
+                      <div className="flex items-center space-x-2 bg-primary/10 px-3 py-1 rounded-full">
+                        <span className="font-medium text-primary">💰 {userCredits} crédits</span>
+                      </div>
+                    )}
                   </div>
 
                   {loading ? (

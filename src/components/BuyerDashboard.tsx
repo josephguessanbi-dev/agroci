@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { ProductDetailsModal } from "./ProductDetailsModal";
 import { EditProfileModal } from "./EditProfileModal";
 import { SubscriptionUpgrade } from "./SubscriptionUpgrade";
+import { BuyerContactRequests } from "./BuyerContactRequests";
 
 interface Product {
   id: string;
@@ -275,8 +276,9 @@ export const BuyerDashboard = () => {
 
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 h-auto p-1 bg-gradient-to-r from-rose-100 to-amber-100">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-6 h-auto p-1 bg-gradient-to-r from-rose-100 to-amber-100">
           <TabsTrigger value="search" className="text-xs sm:text-sm px-2 py-2 data-[state=active]:bg-cyan-500 data-[state=active]:text-white">Rechercher</TabsTrigger>
+          <TabsTrigger value="requests" className="text-xs sm:text-sm px-2 py-2 data-[state=active]:bg-pink-500 data-[state=active]:text-white">Demandes</TabsTrigger>
           <TabsTrigger value="favorites" className="text-xs sm:text-sm px-2 py-2 data-[state=active]:bg-rose-500 data-[state=active]:text-white">Favoris</TabsTrigger>
           <TabsTrigger value="history" className="text-xs sm:text-sm px-2 py-2 data-[state=active]:bg-indigo-500 data-[state=active]:text-white">Historique</TabsTrigger>
           <TabsTrigger value="subscription" className="text-xs sm:text-sm px-2 py-2 data-[state=active]:bg-purple-500 data-[state=active]:text-white">Abonnement</TabsTrigger>
@@ -441,6 +443,10 @@ export const BuyerDashboard = () => {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="requests" className="space-y-6">
+          <BuyerContactRequests />
         </TabsContent>
 
         <TabsContent value="favorites" className="space-y-6">

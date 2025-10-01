@@ -298,7 +298,10 @@ export const ProducerDashboard = () => {
       </div>
 
       {/* Main Content */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={(value) => {
+        console.log('Tab changed to:', value);
+        setActiveTab(value);
+      }}>
         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-6 h-auto p-1 bg-gradient-to-r from-emerald-100 to-blue-100">
           <TabsTrigger value="overview" className="text-xs sm:text-sm px-2 py-2 data-[state=active]:bg-emerald-500 data-[state=active]:text-white">Aperçu</TabsTrigger>
           <TabsTrigger value="requests" className="text-xs sm:text-sm px-2 py-2 data-[state=active]:bg-pink-500 data-[state=active]:text-white">Demandes</TabsTrigger>

@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { MessageSquare, Clock, CheckCircle, XCircle } from "lucide-react";
+import { MessageSquare, Clock, CheckCircle, XCircle, RefreshCw, Trash2 } from "lucide-react";
 
 interface ContactRequest {
   id: string;
@@ -37,29 +37,63 @@ export const BuyerContactRequests = () => {
     if (!user) return;
 
     try {
-      const { data: profile } = await supabase
+      console.log('BuyerContactRequests - Chargement des demandes...');
+      
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('id')
         .eq('user_id', user.id)
         .single();
 
+      console.log('Profile trouvé:', profile);
+      
+      if (profileError) {
+        console.error('Erreur profile:', profileError);
+        return;
+      }
+      
       if (!profile) return;
 
       const { data, error } = await supabase
         .from('contact_requests')
         .select(`
-          *,
-          producer_profile:profiles!contact_requests_producer_id_fkey(nom, prenom, whatsapp, pays, region),
-          product:products(nom, image_url)
+          id,
+          producer_id,
+          product_id,
+          status,
+          message,
+          created_at,
+          profiles!producer_id(nom, prenom, whatsapp, pays, region),
+          products!product_id(nom, image_url)
         `)
         .eq('buyer_id', profile.id)
         .order('created_at', { ascending: false });
 
+      console.log('Demandes chargées:', data);
+      console.log('Erreur:', error);
+
       if (error) throw error;
 
-      setRequests(data || []);
+      // Transform data to match interface
+      const transformedData = data?.map(req => ({
+        id: req.id,
+        producer_id: req.producer_id,
+        product_id: req.product_id,
+        status: req.status,
+        message: req.message,
+        created_at: req.created_at,
+        producer_profile: Array.isArray(req.profiles) ? req.profiles[0] : req.profiles,
+        product: Array.isArray(req.products) ? req.products[0] : req.products,
+      })) || [];
+
+      setRequests(transformedData);
     } catch (error: any) {
       console.error('Erreur lors du chargement des demandes:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger vos demandes",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -87,6 +121,58 @@ export const BuyerContactRequests = () => {
     
     // Open WhatsApp
     window.open(whatsappUrl, '_blank');
+  };
+
+  const handleRetry = async (requestId: string) => {
+    try {
+      const { error } = await supabase
+        .from('contact_requests')
+        .update({ status: 'en_attente' })
+        .eq('id', requestId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Demande relancée",
+        description: "Le producteur a été notifié de votre nouvelle demande",
+      });
+
+      loadRequests();
+    } catch (error: any) {
+      console.error('Erreur lors de la relance:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de relancer la demande",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDelete = async (requestId: string) => {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cette demande ?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('contact_requests')
+        .delete()
+        .eq('id', requestId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Demande supprimée",
+        description: "La demande a été supprimée avec succès",
+      });
+
+      loadRequests();
+    } catch (error: any) {
+      console.error('Erreur lors de la suppression:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer la demande",
+        variant: "destructive",
+      });
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -202,19 +288,53 @@ export const BuyerContactRequests = () => {
                       </div>
                     )}
                     
-                    {request.status === 'en_attente' && (
-                      <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
-                        <p className="text-sm text-yellow-800">
-                          ⏳ En attente de la réponse du producteur
-                        </p>
-                      </div>
-                    )}
                     
                     {request.status === 'refusee' && (
-                      <div className="bg-red-50 border border-red-200 p-3 rounded-lg">
-                        <p className="text-sm text-red-800">
-                          ❌ Le producteur a refusé cette demande
-                        </p>
+                      <div className="space-y-2">
+                        <div className="bg-red-50 border border-red-200 p-3 rounded-lg">
+                          <p className="text-sm text-red-800">
+                            ❌ Le producteur a refusé cette demande
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={() => handleRetry(request.id)}
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                          >
+                            <RefreshCw className="h-4 w-4 mr-2" />
+                            Relancer
+                          </Button>
+                          <Button
+                            onClick={() => handleDelete(request.id)}
+                            variant="destructive"
+                            size="sm"
+                            className="flex-1"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Supprimer
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {request.status === 'en_attente' && (
+                      <div className="space-y-2">
+                        <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
+                          <p className="text-sm text-yellow-800">
+                            ⏳ En attente de la réponse du producteur
+                          </p>
+                        </div>
+                        <Button
+                          onClick={() => handleDelete(request.id)}
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Annuler la demande
+                        </Button>
                       </div>
                     )}
                   </div>

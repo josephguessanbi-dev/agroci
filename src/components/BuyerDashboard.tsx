@@ -11,6 +11,7 @@ import { ProductDetailsModal } from "./ProductDetailsModal";
 import { EditProfileModal } from "./EditProfileModal";
 import { SubscriptionUpgrade } from "./SubscriptionUpgrade";
 import { BuyerContactRequests } from "./BuyerContactRequests";
+import { ContactProducerModal } from "./ContactProducerModal";
 
 interface Product {
   id: string;
@@ -40,6 +41,10 @@ export const BuyerDashboard = () => {
   const [profile, setProfile] = useState<any>(null);
   const [subscription, setSubscription] = useState<any>(null);
   const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
+  const [contactModalOpen, setContactModalOpen] = useState(false);
+  const [modalProducer, setModalProducer] = useState<any>(null);
+  const [modalProductName, setModalProductName] = useState('');
+  const [modalProductId, setModalProductId] = useState('');
   const { user } = useAuth();
 
   // Debug logs pour les onglets
@@ -127,40 +132,93 @@ export const BuyerDashboard = () => {
 
   const handleWhatsAppClick = async (product: any) => {
     try {
-      // Obtenir les informations de contact sécurisées
-      const { data: contactInfo, error } = await supabase.rpc(
-        'get_producer_contact_info',
-        { 
-          producer_profile_id: product.producteur_id,
-          product_id: product.id 
+      // Vérifier l'authentification et le profil
+      if (!user) {
+        toast.error("Veuillez vous connecter pour contacter un producteur");
+        return;
+      }
+
+      // S'assurer d'avoir l'id du profil acheteur
+      let buyerProfileId = profile?.id as string | undefined;
+      if (!buyerProfileId) {
+        const { data: prof } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        buyerProfileId = prof?.id;
+      }
+      if (!buyerProfileId) {
+        toast.error("Complétez votre profil avant de contacter un producteur");
+        return;
+      }
+
+      // Vérifier s'il existe une demande acceptée pour ce couple acheteur/producteur/produit
+      const { data: existingReq, error: reqError } = await supabase
+        .from('contact_requests')
+        .select('status')
+        .eq('buyer_id', buyerProfileId)
+        .eq('producer_id', product.producteur_id)
+        .eq('product_id', product.id)
+        .maybeSingle();
+
+      if (reqError) {
+        console.error('Erreur vérification demande:', reqError);
+      }
+
+      if (existingReq?.status === 'acceptee') {
+        // Autorisé: récupérer les infos de contact via RPC sécurisée
+        const { data: contactInfo, error } = await supabase.rpc(
+          'get_producer_contact_info',
+          { 
+            producer_profile_id: product.producteur_id,
+            product_id: product.id 
+          }
+        );
+
+        if (error) {
+          console.error('Erreur lors de la récupération des infos de contact:', error);
+          toast.error("Impossible d'obtenir les informations de contact");
+          return;
         }
-      );
 
-      if (error) {
-        console.error('Erreur lors de la récupération des infos de contact:', error);
-        toast.error("Impossible d'obtenir les informations de contact");
+        if (!contactInfo || contactInfo.length === 0) {
+          toast.error("Informations de contact non disponibles");
+          return;
+        }
+
+        const contact = contactInfo[0];
+        const raw = contact.whatsapp || '';
+        const phoneNumber = raw.replace(/[^\d]/g, ''); // wa.me exige uniquement des chiffres
+        if (!phoneNumber) {
+          toast.error("Numéro WhatsApp non disponible");
+          return;
+        }
+
+        const message = encodeURIComponent(`Bonjour ${contact.prenom} ${contact.nom}, je suis intéressé(e) par votre produit: ${product.nom} (${product.prix} FCFA)`);
+        window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
+        toast.success("Redirection vers WhatsApp...");
         return;
       }
 
-      if (!contactInfo || contactInfo.length === 0) {
-        toast.error("Informations de contact non disponibles");
-        return;
-      }
+      // Pas de demande acceptée: ouvrir la modal d'envoi de demande
+      setModalProducer({
+        id: product.producteur_id,
+        nom: product.profiles?.nom || '',
+        prenom: product.profiles?.prenom || '',
+        whatsapp: ''
+      });
+      setModalProductName(product.nom);
+      setModalProductId(product.id);
+      setContactModalOpen(true);
 
-      const contact = contactInfo[0];
-      
-      // Ouvrir WhatsApp avec le numéro récupéré de manière sécurisée
-      const raw = contact.whatsapp || '';
-      const phoneNumber = raw.replace(/[^\d]/g, ''); // wa.me exige uniquement des chiffres
-      if (!phoneNumber) {
-        toast.error("Numéro WhatsApp non disponible");
-        return;
+      if (existingReq?.status === 'en_attente') {
+        toast("Demande déjà envoyée: en attente de validation du producteur");
+      } else if (existingReq?.status === 'refusee') {
+        toast("La demande a été refusée. Vous pouvez la relancer depuis l'onglet Demandes.");
+      } else {
+        toast("Envoyez une demande de contact au producteur");
       }
-
-      const message = encodeURIComponent(`Bonjour ${contact.prenom} ${contact.nom}, je suis intéressé(e) par votre produit: ${product.nom} (${product.prix} FCFA)`);
-      window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
-      
-      toast.success("Redirection vers WhatsApp...");
     } catch (error) {
       console.error('Erreur lors du clic WhatsApp:', error);
       toast.error("Erreur lors de l'ouverture de WhatsApp");
@@ -576,6 +634,15 @@ export const BuyerDashboard = () => {
           setIsEditProfileModalOpen(false);
           // Refresh profile data if needed
         }}
+      />
+
+      {/* Modal d’envoi de demande de contact */}
+      <ContactProducerModal
+        open={contactModalOpen}
+        onOpenChange={setContactModalOpen}
+        producer={modalProducer}
+        productName={modalProductName}
+        productId={modalProductId}
       />
     </div>
   );

@@ -50,8 +50,8 @@ export const ContactRequestsList = () => {
         .from('contact_requests')
         .select(`
           *,
-          buyer_profile:profiles!contact_requests_buyer_id_fkey(nom, prenom, whatsapp, pays, region),
-          product:products(nom, image_url)
+          buyer_profile:profiles!buyer_id(nom, prenom, whatsapp, pays, region),
+          product:products!product_id(nom, image_url)
         `)
         .eq('producer_id', profile.id)
         .eq('status', 'en_attente')

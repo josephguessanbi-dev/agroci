@@ -59,7 +59,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, []);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      // Tenter de se déconnecter côté serveur
+      await supabase.auth.signOut();
+    } catch (error) {
+      // Ignorer les erreurs de session non trouvée - la session locale sera quand même nettoyée
+      console.log('Déconnexion effectuée (erreur ignorée):', error);
+    }
+    
+    // Toujours nettoyer l'état local, même si la déconnexion serveur échoue
+    setSession(null);
+    setUser(null);
   };
 
   const value = {

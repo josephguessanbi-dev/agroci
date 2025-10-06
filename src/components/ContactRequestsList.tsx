@@ -50,20 +50,26 @@ export const ContactRequestsList = () => {
         .from('contact_requests')
         .select(`
           *,
-          buyer_profile:profiles!buyer_id(nom, prenom, whatsapp, pays, region),
-          product:products!product_id(nom, image_url)
+          buyer_profile:profiles!contact_requests_buyer_id_fkey(nom, prenom, whatsapp, pays, region),
+          product:products!contact_requests_product_id_fkey(nom, image_url)
         `)
         .eq('producer_id', profile.id)
         .eq('status', 'en_attente')
         .order('created_at', { ascending: false });
 
+      console.log('ContactRequestsList - Données brutes:', data);
+      console.log('ContactRequestsList - Erreur:', error);
+
       if (error) throw error;
 
-      // Filtrer les demandes avec des données valides
-      const validRequests = (data || []).filter(req => 
-        req.buyer_profile && req.product
-      );
+      // Transformer et filtrer les demandes avec des données valides
+      const validRequests = (data || []).map(req => ({
+        ...req,
+        buyer_profile: Array.isArray(req.buyer_profile) ? req.buyer_profile[0] : req.buyer_profile,
+        product: Array.isArray(req.product) ? req.product[0] : req.product,
+      })).filter(req => req.buyer_profile && req.product);
 
+      console.log('ContactRequestsList - Demandes transformées:', validRequests);
       setRequests(validRequests);
     } catch (error: any) {
       console.error('Erreur lors du chargement des demandes:', error);

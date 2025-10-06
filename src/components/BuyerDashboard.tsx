@@ -204,7 +204,7 @@ export const BuyerDashboard = () => {
             .from('whatsapp_clicks')
             .insert({
               product_id: product.id,
-              buyer_id: buyerProfileId
+              clicker_id: buyerProfileId
             });
           
           // Incrémenter le compteur de clicks sur le produit

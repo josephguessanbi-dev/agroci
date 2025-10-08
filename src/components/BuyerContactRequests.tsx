@@ -63,8 +63,8 @@ export const BuyerContactRequests = () => {
           status,
           message,
           created_at,
-          profiles!producer_id(nom, prenom, whatsapp, pays, region),
-          products!product_id(nom, image_url)
+          producer_profile:profiles!contact_requests_producer_id_fkey(nom, prenom, whatsapp, pays, region),
+          product:products!contact_requests_product_id_fkey(nom, image_url)
         `)
         .eq('buyer_id', profile.id)
         .order('created_at', { ascending: false });
@@ -76,8 +76,8 @@ export const BuyerContactRequests = () => {
 
       // Transform data to match interface and filter out invalid entries
       const transformedData = data?.map(req => {
-        const producerProfile = Array.isArray(req.profiles) ? req.profiles[0] : req.profiles;
-        const product = Array.isArray(req.products) ? req.products[0] : req.products;
+        const producerProfile = Array.isArray(req.producer_profile) ? req.producer_profile[0] : req.producer_profile;
+        const product = Array.isArray(req.product) ? req.product[0] : req.product;
         
         return {
           id: req.id,
@@ -90,7 +90,6 @@ export const BuyerContactRequests = () => {
           product: product,
         };
       }).filter(req => req.producer_profile && req.product) || [];
-
       console.log('Demandes transformées:', transformedData);
       setRequests(transformedData);
     } catch (error: any) {

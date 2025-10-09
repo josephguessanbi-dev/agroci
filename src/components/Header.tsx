@@ -127,15 +127,16 @@ export const Header = () => {
           </nav>
 
           {/* Desktop Auth Buttons */}
-          <div className="hidden md:flex items-center space-x-4">
-            <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-              <div className="flex items-center space-x-2">
-                <Phone className="h-4 w-4" />
-                <span>+225 0789363442</span>
+          <div className="hidden md:flex items-center space-x-2 lg:space-x-4">
+            <div className="flex items-center space-x-2 lg:space-x-4 text-xs lg:text-sm text-muted-foreground">
+              <div className="flex items-center space-x-1 lg:space-x-2">
+                <Phone className="h-3 w-3 lg:h-4 lg:w-4 flex-shrink-0" />
+                <span className="hidden lg:inline">+225 0789363442</span>
+                <span className="lg:hidden text-xs">+225...</span>
               </div>
               {user && userCredits !== null && (
-                <div className="flex items-center space-x-2 bg-primary/10 px-3 py-1 rounded-full">
-                  <span className="font-medium text-primary">💰 {userCredits} crédits</span>
+                <div className="flex items-center space-x-1 bg-primary/10 px-2 py-1 rounded-full whitespace-nowrap">
+                  <span className="font-medium text-primary text-xs">💰 {userCredits}</span>
                 </div>
               )}
             </div>

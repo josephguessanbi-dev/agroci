@@ -245,14 +245,14 @@ export const ProducerDashboard = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200 shadow-lg hover:shadow-emerald-200/50 transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-emerald-700">Produits publiés</CardTitle>
-            <div className="p-2 bg-emerald-100 rounded-lg">
-              <Package className="h-4 w-4 text-emerald-600" />
+            <CardTitle className="text-xs sm:text-sm font-medium text-emerald-700 truncate">Produits publiés</CardTitle>
+            <div className="p-1.5 sm:p-2 bg-emerald-100 rounded-lg flex-shrink-0">
+              <Package className="h-3 w-3 sm:h-4 sm:w-4 text-emerald-600" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-emerald-800">{stats.totalProducts}</div>
-            <p className="text-xs text-emerald-600">
+            <div className="text-xl sm:text-2xl font-bold text-emerald-800">{stats.totalProducts}</div>
+            <p className="text-[10px] sm:text-xs text-emerald-600 truncate">
               Limite: Aucune
             </p>
           </CardContent>
@@ -260,14 +260,14 @@ export const ProducerDashboard = () => {
 
         <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 shadow-lg hover:shadow-blue-200/50 transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-blue-700">Total des vues</CardTitle>
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Eye className="h-4 w-4 text-blue-600" />
+            <CardTitle className="text-xs sm:text-sm font-medium text-blue-700 truncate">Total des vues</CardTitle>
+            <div className="p-1.5 sm:p-2 bg-blue-100 rounded-lg flex-shrink-0">
+              <Eye className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-800">{stats.totalViews}</div>
-            <p className="text-xs text-blue-600">
+            <div className="text-xl sm:text-2xl font-bold text-blue-800">{stats.totalViews}</div>
+            <p className="text-[10px] sm:text-xs text-blue-600 truncate">
               Vues totales
             </p>
           </CardContent>
@@ -275,14 +275,14 @@ export const ProducerDashboard = () => {
 
         <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 shadow-lg hover:shadow-orange-200/50 transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-orange-700">Clics WhatsApp</CardTitle>
-            <div className="p-2 bg-orange-100 rounded-lg">
-              <MessageCircle className="h-4 w-4 text-orange-600" />
+            <CardTitle className="text-xs sm:text-sm font-medium text-orange-700 truncate">Clics WhatsApp</CardTitle>
+            <div className="p-1.5 sm:p-2 bg-orange-100 rounded-lg flex-shrink-0">
+              <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4 text-orange-600" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-800">{stats.totalClicks}</div>
-            <p className="text-xs text-orange-600">
+            <div className="text-xl sm:text-2xl font-bold text-orange-800">{stats.totalClicks}</div>
+            <p className="text-[10px] sm:text-xs text-orange-600 truncate">
               Clics totaux
             </p>
           </CardContent>
@@ -290,14 +290,14 @@ export const ProducerDashboard = () => {
 
         <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 shadow-lg hover:shadow-purple-200/50 transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-purple-700">Taux de conversion</CardTitle>
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <BarChart3 className="h-4 w-4 text-purple-600" />
+            <CardTitle className="text-xs sm:text-sm font-medium text-purple-700 truncate">Taux de conversion</CardTitle>
+            <div className="p-1.5 sm:p-2 bg-purple-100 rounded-lg flex-shrink-0">
+              <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 text-purple-600" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-800">{stats.conversionRate}%</div>
-            <p className="text-xs text-purple-600">
+            <div className="text-xl sm:text-2xl font-bold text-purple-800">{stats.conversionRate}%</div>
+            <p className="text-[10px] sm:text-xs text-purple-600 truncate">
               Taux de conversion
             </p>
           </CardContent>
@@ -309,13 +309,13 @@ export const ProducerDashboard = () => {
         console.log('Tab changed to:', value);
         setActiveTab(value);
       }}>
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-6 h-auto p-1 bg-gradient-to-r from-emerald-100 to-blue-100">
-          <TabsTrigger value="overview" className="text-xs sm:text-sm px-2 py-2 data-[state=active]:bg-emerald-500 data-[state=active]:text-white">Aperçu</TabsTrigger>
-          <TabsTrigger value="requests" className="text-xs sm:text-sm px-2 py-2 data-[state=active]:bg-pink-500 data-[state=active]:text-white">Demandes</TabsTrigger>
-          <TabsTrigger value="products" className="text-xs sm:text-sm px-2 py-2 data-[state=active]:bg-blue-500 data-[state=active]:text-white">Mes Produits</TabsTrigger>
-          <TabsTrigger value="add-product" className="text-xs sm:text-sm px-2 py-2 data-[state=active]:bg-orange-500 data-[state=active]:text-white">Ajouter</TabsTrigger>
-          <TabsTrigger value="subscription" className="text-xs sm:text-sm px-2 py-2 data-[state=active]:bg-purple-500 data-[state=active]:text-white">Abonnement</TabsTrigger>
-          <TabsTrigger value="profile" className="text-xs sm:text-sm px-2 py-2 data-[state=active]:bg-indigo-500 data-[state=active]:text-white">Profil</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 h-auto p-1 bg-gradient-to-r from-emerald-100 to-blue-100 gap-1">
+          <TabsTrigger value="overview" className="text-[10px] sm:text-sm px-1 sm:px-2 py-2 data-[state=active]:bg-emerald-500 data-[state=active]:text-white whitespace-nowrap">Aperçu</TabsTrigger>
+          <TabsTrigger value="requests" className="text-[10px] sm:text-sm px-1 sm:px-2 py-2 data-[state=active]:bg-pink-500 data-[state=active]:text-white whitespace-nowrap">Demandes</TabsTrigger>
+          <TabsTrigger value="products" className="text-[10px] sm:text-sm px-1 sm:px-2 py-2 data-[state=active]:bg-blue-500 data-[state=active]:text-white whitespace-nowrap">Produits</TabsTrigger>
+          <TabsTrigger value="add-product" className="text-[10px] sm:text-sm px-1 sm:px-2 py-2 data-[state=active]:bg-orange-500 data-[state=active]:text-white whitespace-nowrap">Ajouter</TabsTrigger>
+          <TabsTrigger value="subscription" className="text-[10px] sm:text-sm px-1 sm:px-2 py-2 data-[state=active]:bg-purple-500 data-[state=active]:text-white whitespace-nowrap">Abonnement</TabsTrigger>
+          <TabsTrigger value="profile" className="text-[10px] sm:text-sm px-1 sm:px-2 py-2 data-[state=active]:bg-indigo-500 data-[state=active]:text-white whitespace-nowrap">Profil</TabsTrigger>
         </TabsList>
 
         <TabsContent value="requests" className="space-y-6">
@@ -331,16 +331,16 @@ export const ProducerDashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div>
-                  <h3 className="font-semibold">Commencez par ajouter votre premier produit</h3>
-                  <p className="text-sm text-muted-foreground">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 border rounded-lg">
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm sm:text-base">Commencez par ajouter votre premier produit</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Publiez vos produits pour les rendre visibles aux acheteurs
                   </p>
                 </div>
-                <Button onClick={() => setActiveTab("add-product")}>
+                <Button onClick={() => setActiveTab("add-product")} className="w-full sm:w-auto whitespace-nowrap">
                   <Plus className="mr-2 h-4 w-4" />
-                  Ajouter un produit
+                  Ajouter
                 </Button>
               </div>
               

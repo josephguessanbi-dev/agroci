@@ -120,6 +120,9 @@ export const ContactRequestsList = () => {
       // Open WhatsApp
       window.open(whatsappUrl, '_blank');
 
+      // Notify dashboard to refresh stats
+      window.dispatchEvent(new CustomEvent('whatsapp:stats-refresh'));
+
       // Reload requests
       loadRequests();
 

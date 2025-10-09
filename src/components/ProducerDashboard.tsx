@@ -232,6 +232,13 @@ export const ProducerDashboard = () => {
     fetchProducts();
   }, [user]);
 
+  // Refresh stats when a WhatsApp click is recorded elsewhere
+  useEffect(() => {
+    const handler = () => fetchProducts();
+    window.addEventListener('whatsapp:stats-refresh', handler);
+    return () => window.removeEventListener('whatsapp:stats-refresh', handler);
+  }, []);
+
   return (
     <div className="space-y-6">
       {/* Quick Stats */}

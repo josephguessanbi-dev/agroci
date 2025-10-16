@@ -45,6 +45,9 @@ export const BuyerDashboard = () => {
   const [modalProducer, setModalProducer] = useState<any>(null);
   const [modalProductName, setModalProductName] = useState('');
   const [modalProductId, setModalProductId] = useState('');
+  const [productViewsCount, setProductViewsCount] = useState(0);
+  const [contactRequestsCount, setContactRequestsCount] = useState(0);
+  const [viewedProducts, setViewedProducts] = useState<Product[]>([]);
   const { user } = useAuth();
 
   // Debug logs pour les onglets
@@ -81,6 +84,66 @@ export const BuyerDashboard = () => {
     
     fetchProfileData();
   }, [user]);
+
+  // Fetch statistics
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (!user || !profile) return;
+
+      // Récupérer le nombre de produits consultés
+      const { count: viewsCount } = await supabase
+        .from('product_views')
+        .select('*', { count: 'exact', head: true })
+        .eq('viewer_id', profile.id);
+
+      setProductViewsCount(viewsCount || 0);
+
+      // Récupérer le nombre de demandes de contact acceptées
+      const { count: contactsCount } = await supabase
+        .from('contact_requests')
+        .select('*', { count: 'exact', head: true })
+        .eq('buyer_id', profile.id)
+        .eq('status', 'acceptee');
+
+      setContactRequestsCount(contactsCount || 0);
+
+      // Récupérer l'historique des produits consultés
+      const { data: viewsData } = await supabase
+        .from('product_views')
+        .select(`
+          viewed_at,
+          products:product_id (
+            id,
+            nom,
+            description,
+            prix,
+            quantite,
+            localisation,
+            image_url,
+            producteur_id,
+            created_at,
+            profiles:producteur_id (
+              nom,
+              prenom,
+              verified,
+              whatsapp
+            )
+          )
+        `)
+        .eq('viewer_id', profile.id)
+        .order('viewed_at', { ascending: false })
+        .limit(20);
+
+      if (viewsData) {
+        const products = viewsData
+          .map((view: any) => view.products)
+          .filter((product: any) => product !== null);
+        setViewedProducts(products);
+      }
+    };
+
+    fetchStats();
+  }, [user, profile]);
 
   const handleSearch = async (query?: string) => {
     const searchTerm = query || searchQuery.trim();
@@ -296,15 +359,15 @@ export const BuyerDashboard = () => {
 
         <Card className="bg-gradient-to-br from-cyan-50 to-cyan-100 border-cyan-200 shadow-lg hover:shadow-cyan-200/50 transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-cyan-700">Recherches</CardTitle>
+            <CardTitle className="text-sm font-medium text-cyan-700">Produits vus</CardTitle>
             <div className="p-2 bg-cyan-100 rounded-lg">
-              <Search className="h-4 w-4 text-cyan-600" />
+              <Eye className="h-4 w-4 text-cyan-600" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-cyan-800">0</div>
+            <div className="text-2xl font-bold text-cyan-800">{productViewsCount}</div>
             <p className="text-xs text-cyan-600">
-              Ce mois-ci
+              Consultés
             </p>
           </CardContent>
         </Card>
@@ -317,7 +380,7 @@ export const BuyerDashboard = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-indigo-800">0</div>
+            <div className="text-2xl font-bold text-indigo-800">{contactRequestsCount}</div>
             <p className="text-xs text-indigo-600">
               Producteurs contactés
             </p>
@@ -542,23 +605,91 @@ export const BuyerDashboard = () => {
         <TabsContent value="history" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Historique des recherches</CardTitle>
+              <CardTitle>Historique des produits consultés</CardTitle>
               <CardDescription>
-                Vos recherches et contacts récents
+                Les {productViewsCount} produits que vous avez consultés récemment
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8">
-                <History className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Aucun historique</h3>
-                <p className="text-muted-foreground mb-4">
-                  Votre historique de recherches apparaîtra ici
-                </p>
-                <Button onClick={() => setActiveTab("search")}>
-                  <Search className="mr-2 h-4 w-4" />
-                  Commencer une recherche
-                </Button>
-              </div>
+              {viewedProducts.length > 0 ? (
+                <div className="space-y-4">
+                  {viewedProducts.map((product) => (
+                    <Card key={product.id} className="p-3 sm:p-4">
+                      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                        {product.image_url && (
+                          <img 
+                            src={product.image_url} 
+                            alt={product.nom}
+                            className="w-full sm:w-20 sm:h-20 h-32 object-cover rounded-md"
+                          />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-2">
+                            <h4 className="font-semibold text-base sm:text-lg">{product.nom}</h4>
+                            <div className="text-left sm:text-right">
+                              <div className="text-lg font-bold text-primary">{product.prix} FCFA</div>
+                              <div className="text-sm text-muted-foreground">{product.quantite}</div>
+                            </div>
+                          </div>
+                          
+                          {product.description && (
+                            <p className="text-muted-foreground mb-3 text-sm line-clamp-2">{product.description}</p>
+                          )}
+                          
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-3">
+                            {product.localisation && (
+                              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                <MapPin className="h-4 w-4 flex-shrink-0" />
+                                <span className="truncate">{product.localisation}</span>
+                              </div>
+                            )}
+                            
+                            {product.profiles && (
+                              <div className="text-sm text-muted-foreground truncate">
+                                Par {product.profiles.prenom} {product.profiles.nom}
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="flex flex-col sm:flex-row gap-2">
+                            <Button 
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleViewProduct(product)}
+                              className="w-full sm:flex-1"
+                            >
+                              <Eye className="mr-2 h-4 w-4" />
+                              Voir à nouveau
+                            </Button>
+                            {product.profiles?.verified && (
+                              <Button 
+                                size="sm" 
+                                className="bg-green-600 hover:bg-green-700 text-white w-full sm:flex-1"
+                                onClick={() => handleWhatsAppClick(product)}
+                              >
+                                <MessageCircle className="mr-2 h-4 w-4" />
+                                Contacter
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <History className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Aucun historique</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Consultez des produits pour commencer à construire votre historique
+                  </p>
+                  <Button onClick={() => setActiveTab("search")}>
+                    <Search className="mr-2 h-4 w-4" />
+                    Rechercher des produits
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

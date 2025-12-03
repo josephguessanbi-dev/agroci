@@ -595,10 +595,7 @@ export type Database = {
         }
         Returns: string
       }
-      delete_user_account: {
-        Args: { profile_id: string }
-        Returns: string
-      }
+      delete_user_account: { Args: { profile_id: string }; Returns: string }
       get_interested_buyers: {
         Args: { producer_user_id: string }
         Returns: {
@@ -646,10 +643,7 @@ export type Database = {
           whatsapp: string
         }[]
       }
-      get_user_type: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      get_user_type: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -661,10 +655,7 @@ export type Database = {
         Args: { credits_to_add: number; user_profile_id: string }
         Returns: undefined
       }
-      promote_to_admin: {
-        Args: { user_email: string }
-        Returns: string
-      }
+      promote_to_admin: { Args: { user_email: string }; Returns: string }
       reject_contact_request: {
         Args: { request_id_param: string }
         Returns: Json
@@ -673,14 +664,8 @@ export type Database = {
         Args: { product_id: string }
         Returns: string
       }
-      toggle_user_suspension: {
-        Args: { profile_id: string }
-        Returns: string
-      }
-      verify_producer: {
-        Args: { profile_id: string }
-        Returns: string
-      }
+      toggle_user_suspension: { Args: { profile_id: string }; Returns: string }
+      verify_producer: { Args: { profile_id: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "moderator" | "producteur" | "acheteur"

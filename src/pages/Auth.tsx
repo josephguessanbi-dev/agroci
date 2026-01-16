@@ -233,7 +233,7 @@ const Auth = () => {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-2">
-            AgroConnect
+            AgroCi
           </h1>
           <p className="text-muted-foreground">
             Connectez-vous à votre compte ou créez-en un nouveau
